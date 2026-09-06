@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
     "lib": ["ESNext"],
+    "types": ["bun"],
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "moduleDetection": "force",
     "allowJs": true,
-    "types": ["node"],
     "typeRoots": ["./src/types/", "./node_modules/@types"],
 
     /* NestJS */
