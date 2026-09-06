@@ -25,8 +25,6 @@ COPY --from=prerelease /usr/src/app/package.json .
 
 RUN mkdir -p /usr/src/app/logs && chown -R bun:bun /usr/src/app/logs
 
-RUN bun run start:prod
-
 USER bun
 EXPOSE 3000/tcp
 ENTRYPOINT [ "bun", "run", "start:prod" ]
