@@ -1,10 +1,11 @@
-import { Module } from "@nestjs/common";
+import { Module, type MiddlewareConsumer, type NestModule } from "@nestjs/common";
 import { AppController } from "./modules/main/app.controller";
 import { AppService } from "./modules/main/app.service";
 import { ConfigModule } from "@nestjs/config";
 import { join } from "path";
 import Joi from "joi";
 import { type Config } from "@types";
+import { GlobalMiddleware } from "@common";
 
 const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : ".env";
 
@@ -38,4 +39,8 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(GlobalMiddleware).forRoutes("*");
+  }
+}
