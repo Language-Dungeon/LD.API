@@ -55,18 +55,19 @@ export class LoggerService implements NestLogger {
   }
 
   log(message: unknown, ..._optionalParams: unknown[]) {
-    this.logger.log("info", message);
+    this.logger.log("info", `${this.context}: ${message}`);
     // this.discordLog(message, false).catch();
   }
 
+  //TODO: if production mention everyone
   error(message: unknown, ..._optionalParams: unknown[]) {
-    // this.logger.log("error", `${} ${message}`);
+    this.logger.log("error", `${this.context}: ${message}`);
     this.discordLog(message, false).catch();
   }
 
   warn(message: unknown, ..._optionalParams: unknown[]) {
-    this.logger.log("warn", message);
-    // this.discordLog(message, false).catch();
+    this.logger.log("warn", `${this.context}: ${message}`);
+    this.discordLog(message, false).catch();
   }
 
   private async discordLog(message: unknown, mention: boolean): Promise<void> {
