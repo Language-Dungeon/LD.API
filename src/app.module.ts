@@ -35,6 +35,7 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
         COOKIE_SECRET: Joi.string().required(),
       }).unknown(true),
     }),
+    //TODO: implement user module
   ],
   controllers: [AppController],
   providers: [AppService],
