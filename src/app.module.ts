@@ -8,6 +8,7 @@ import Joi from "joi";
 import { type Config } from "@types";
 import { GlobalMiddleware } from "@common";
 import { LoggerModule, LoggerService } from "@modules/logger";
+import { Connection } from "mongoose";
 
 const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : ".env";
 
@@ -37,17 +38,35 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
         COOKIE_SECRET: Joi.string().required(),
       }).unknown(true),
     }),
+
     MongooseModule.forRootAsync({
-      inject: [ConfigService, LoggerModule.register("DB")],
-      useFactory: (config: ConfigService<Config>, logger: LoggerService) => {
-        return {
-          uri: config.getOrThrow("DB_URI"),
-          dbName: config.getOrThrow("DB_NAME"),
-          onConnectionCreate(connection) {
-            logger.log(`app connected to ${connection.db?.databaseName}`);
-          },
-        };
-      },
+      imports: [LoggerModule.register("DB")],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<Config>, logger: LoggerService) => ({
+        uri: config.getOrThrow("DB_URI"),
+        dbName: config.getOrThrow("DB_NAME"),
+        retryAttempts: 2,
+        retryDelay: 3000,
+        verboseRetryLog: true,
+        serverSelectionTimeoutMS: 10000,
+        connectTimeoutMS: 5000,
+
+        connectionFactory: (connection: Connection) => {
+          connection.once("connected", () => {
+            logger.log(`MongoDB connected to ${connection.db?.databaseName}`);
+          });
+
+          connection.on("error", (error) => {
+            logger.error(`MongoDB connection error: ${error.message}`);
+          });
+
+          connection.on("disconnected", () => {
+            logger.warn("MongoDB disconnected");
+          });
+
+          return connection;
+        },
+      }),
     }),
   ],
   controllers: [AppController],
