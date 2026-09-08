@@ -4,6 +4,7 @@ import mongoose, { HydratedDocument } from "mongoose";
 export interface IUserAttributes {
   username: string;
   email: string;
+  password: string;
   activated: boolean;
 }
 
@@ -14,6 +15,9 @@ export class User implements IUserAttributes {
 
   @Prop({ required: true, type: mongoose.Schema.Types.String })
   email!: string;
+
+  @Prop({ required: true, type: mongoose.Schema.Types.String })
+  password!: string;
 
   @Prop({ required: true, type: mongoose.Schema.Types.Boolean })
   activated!: boolean;
