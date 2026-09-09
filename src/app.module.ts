@@ -1,5 +1,5 @@
 import { Module, type MiddlewareConsumer, type NestModule } from "@nestjs/common";
-import { LoggerModule, LoggerService, AppService, AppController } from "@modules";
+import { LoggerModule, LoggerService, AppService, AppController, AuthModule } from "@modules";
 import { MongooseModule } from "@nestjs/mongoose";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { join } from "path";
@@ -82,6 +82,8 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
     JwtModule.register({
       global: true,
     }),
+
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

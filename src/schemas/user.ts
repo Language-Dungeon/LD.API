@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import mongoose, { HydratedDocument } from "mongoose";
 
 export interface IUserAttributes {
+  // id: string;
   username: string;
   email: string;
   password: string;
@@ -10,10 +11,13 @@ export interface IUserAttributes {
 
 @Schema()
 export class User implements IUserAttributes {
+  @Prop({ required: true, unique: true, type: mongoose.Schema.Types.ObjectId })
+  id!: string;
+
   @Prop({ required: true, type: mongoose.Schema.Types.String })
   username!: string;
 
-  @Prop({ required: true, type: mongoose.Schema.Types.String })
+  @Prop({ required: true, unique: true, type: mongoose.Schema.Types.String })
   email!: string;
 
   @Prop({ required: true, type: mongoose.Schema.Types.String })
