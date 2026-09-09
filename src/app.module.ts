@@ -1,14 +1,15 @@
 import { Module, type MiddlewareConsumer, type NestModule } from "@nestjs/common";
-import { AppController } from "./modules/main/app.controller";
-import { AppService } from "./modules/main/app.service";
+import { LoggerModule, LoggerService, AppService, AppController } from "@modules";
 import { MongooseModule } from "@nestjs/mongoose";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { join } from "path";
 import Joi from "joi";
 import { type Config } from "@types";
 import { GlobalMiddleware } from "@common";
-import { LoggerModule, LoggerService } from "@modules/logger";
 import { Connection } from "mongoose";
+import { CacheModule } from "@nestjs/cache-manager";
+import KeyvRedis from "@keyv/redis";
+import { JwtModule } from "@nestjs/jwt";
 
 const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : ".env";
 
@@ -30,8 +31,8 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
 
         WEBHOOK: Joi.string().uri().required(),
 
-        // REDIS_URI: Joi.string().required(),
-        // REDIS_PORT: Joi.number().port().required(),
+        REDIS_URI: Joi.string().required(),
+        REDIS_PORT: Joi.number().port().required(),
 
         JWT_SECRET: Joi.string().required(),
         JWT_REFRESH_SECRET: Joi.string().required(),
@@ -67,6 +68,19 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
           return connection;
         },
       }),
+    }),
+
+    CacheModule.registerAsync({
+      isGlobal: true,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<Config>) => ({
+        stores: [new KeyvRedis(config.getOrThrow("REDIS_URI", { infer: true }))],
+        ttl: 600000,
+      }),
+    }),
+
+    JwtModule.register({
+      global: true,
     }),
   ],
   controllers: [AppController],
