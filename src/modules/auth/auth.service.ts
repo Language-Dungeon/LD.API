@@ -1,5 +1,5 @@
 import { UsersService } from "@modules/users/users.service";
-import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { UserLoginDTO } from "./dto/login";
@@ -16,6 +16,7 @@ import {
   JwtRefreshPayload,
   JwtRefreshRawPayload,
 } from "@types";
+import { CreateUserDto } from "@modules/users/dto/create-user.dto";
 
 @Injectable()
 export class AuthService {
@@ -26,8 +27,8 @@ export class AuthService {
     private readonly user: UsersService,
   ) {}
 
-  async login(data: UserLoginDTO) {
-    const user = await this.user.findOneByEmail(data.email);
+  async login(body: UserLoginDTO) {
+    const user = await this.user.findOneByEmail(body.email);
     if (!user) throw new NotFoundException();
 
     const access = await this.generateAuthJwt({
@@ -43,6 +44,11 @@ export class AuthService {
     });
 
     return { access, refresh };
+  }
+
+  async signup(body: CreateUserDto) {
+    const existingUser = await this.user.findOneByEmail(body.email);
+    if (existingUser) throw new ConflictException();
   }
 
   async refresh(session: JwtRefreshPayload) {
