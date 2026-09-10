@@ -40,16 +40,16 @@ export class LoggerService implements NestLogger {
           }),
         ),
       }),
-      webhook: new transports.Http({
-        host: config.getOrThrow("WEBHOOK"),
-      }),
     };
 
     this.logger = createLogger({
       level: "info",
       format: format.combine(format.timestamp(), format.errors({ stack: true }), format.json()),
       transports: [transportOptions.file, transportOptions.console],
-      exceptionHandlers: [transportOptions.file, transportOptions.console],
+      exceptionHandlers: [
+        transportOptions.file,
+        config.getOrThrow("NODE_ENV") == "dev" ? transportOptions.console : null,
+      ],
       exitOnError: false,
     });
   }
@@ -61,7 +61,17 @@ export class LoggerService implements NestLogger {
 
   //TODO: if production mention everyone
   error(message: unknown, ..._optionalParams: unknown[]) {
-    this.logger.log("error", `${this.context}: ${message}`);
+    if (message instanceof Error) {
+      this.logger.error(message.message, {
+        context: this.context,
+        stack: message.stack,
+      });
+    } else {
+      this.logger.error(String(message), {
+        context: this.context,
+      });
+    }
+
     this.discordLog(message, false).catch();
   }
 
@@ -89,7 +99,7 @@ export class LoggerService implements NestLogger {
   private createEmbed(message: unknown): Embed {
     return {
       color: 16347926,
-      description: `\`\`\`${JSON.stringify(message, null, 4)}\`\`\``,
+      description: `\`\`\`${message}\`\`\``,
       type: "rich",
     };
   }

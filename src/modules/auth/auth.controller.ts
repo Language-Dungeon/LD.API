@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Res } from "@nestjs/common";
+import { Body, Controller, HttpCode, Post, Res } from "@nestjs/common";
 import type { Response } from "express";
 import { AuthService } from "./auth.service";
 import { UserLoginDTO } from "./dto/login";
@@ -11,6 +11,7 @@ export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
   @Post("login")
+  @HttpCode(200)
   async login(@Res({ passthrough: true }) res: Response, @Body() body: UserLoginDTO) {
     console.log(body);
     const { access, refresh } = await this.auth.login(body);
@@ -33,7 +34,16 @@ export class AuthController {
       });
   }
 
+  @Post("signup")
+  @HttpCode(201)
+  async signUp(@Body() body: CreateUserDto) {
+    await this.auth.signup(body);
+
+    return await this.auth.login(body);
+  }
+
   @Post("refresh")
+  @HttpCode(200)
   async refresh(@CurrentSession() session: JwtRefreshPayload, @Res({ passthrough: true }) res: Response) {
     const { access, refresh } = await this.auth.refresh(session);
     const now = Date.now();
@@ -44,20 +54,21 @@ export class AuthController {
         httpOnly: true,
         secure: true,
         sameSite: true,
-        expires: new Date(now + 300 * 1000), //5mins
+        expires: new Date(now + EXPIRES_IN_10MINS * 1000), //10mins
       })
       .cookie("refresh_token", refresh, {
         signed: true,
         httpOnly: true,
         secure: true,
         sameSite: true,
-        expires: new Date(now + 604800 * 1000), //7days
+        expires: new Date(now + EXPIRES_IN_7_DAYS * 1000), //7days
       })
       .status(200)
       .send();
   }
 
   @Post("logout")
+  @HttpCode(200)
   async logout(@CurrentUser() user: JwtPayload, @CurrentSession() session: JwtRefreshPayload, @Res() res: Response) {
     await this.auth.logout(user, session);
     return res.status(200).send();

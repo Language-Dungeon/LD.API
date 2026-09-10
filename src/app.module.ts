@@ -21,6 +21,7 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
       validationSchema: Joi.object<Config>({
         NODE_ENV: Joi.string().valid("production", "dev").required(),
         PORT_MAIN: Joi.number().port().required(),
+        PASSWORD_HASH_SECRET: Joi.string().required(),
 
         // DB_HOST: Joi.string().required(),
         DB_NAME: Joi.string().required(),
@@ -58,7 +59,7 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
           });
 
           connection.on("error", (error) => {
-            logger.error(`MongoDB connection error: ${error.message}`);
+            logger.error(`MongoDB connection error: ${JSON.stringify(error)}`);
           });
 
           connection.on("disconnected", () => {

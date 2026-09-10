@@ -4,6 +4,9 @@ import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { UserLoginDTO } from "./dto/login";
 import { Cache } from "@nestjs/cache-manager";
+import * as argon2 from "argon2";
+import { randomBytes } from "node:crypto";
+
 import {
   type JwtRawPayload,
   BLACKLIST_KEY,
@@ -17,6 +20,9 @@ import {
   JwtRefreshRawPayload,
 } from "@types";
 import { CreateUserDto } from "@modules/users/dto/create-user.dto";
+import { promisify } from "node:util";
+import { plainToInstance } from "class-transformer";
+import { UserDTO } from "@modules/users/dto/user.dto";
 
 @Injectable()
 export class AuthService {
@@ -49,6 +55,23 @@ export class AuthService {
   async signup(body: CreateUserDto) {
     const existingUser = await this.user.findOneByEmail(body.email);
     if (existingUser) throw new ConflictException();
+
+    const genSalt = promisify(randomBytes);
+
+    const payload: CreateUserDto = {
+      email: body.email,
+      username: body.username,
+      password: await argon2.hash(body.password, {
+        type: argon2.argon2id,
+        salt: await genSalt(16),
+        parallelism: 4,
+        secret: Buffer.from(this.config.getOrThrow<string>("PASSWORD_HASH_SECRET"), "utf8"),
+      }),
+    };
+
+    const user = await this.user.create(payload);
+
+    return plainToInstance(UserDTO, user, { excludeExtraneousValues: true });
   }
 
   async refresh(session: JwtRefreshPayload) {
