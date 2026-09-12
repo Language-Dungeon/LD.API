@@ -10,6 +10,8 @@ import { Connection } from "mongoose";
 import { CacheModule } from "@nestjs/cache-manager";
 import KeyvRedis from "@keyv/redis";
 import { JwtModule } from "@nestjs/jwt";
+import { APP_GUARD } from "@nestjs/core";
+import { JwtAuthGuard } from "@common";
 
 const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : ".env";
 
@@ -73,11 +75,23 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
 
     CacheModule.registerAsync({
       isGlobal: true,
-      inject: [ConfigService],
-      useFactory: (config: ConfigService<Config>) => ({
-        stores: [new KeyvRedis(config.getOrThrow("REDIS_URI", { infer: true }))],
-        ttl: 600000,
-      }),
+      imports: [LoggerModule.register("Cache")],
+      inject: [ConfigService, LoggerService],
+      useFactory: async (config: ConfigService<Config>, logger: LoggerService) => {
+        const store = new KeyvRedis(config.getOrThrow("REDIS_URI", { infer: true }), {
+          throwOnConnectError: true,
+          throwOnErrors: true,
+        });
+
+        store.set("healthcheck", "healthcheck", 1000);
+        store.on("connect", () => logger.log("Connected to redis"));
+        store.on("error", (error) => logger.error(error));
+
+        return {
+          stores: [store],
+          ttl: 600000,
+        };
+      },
     }),
 
     JwtModule.register({
@@ -87,7 +101,13 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

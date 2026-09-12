@@ -5,6 +5,7 @@ import type { Config } from "@types";
 
 @Module({
   providers: [LoggerService],
+  exports: [LoggerService],
 })
 export class LoggerModule {
   static register(context: string): DynamicModule {

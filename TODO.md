@@ -1,0 +1,8 @@
+- Remove hard coded paths
+- Unit tests
+- Logger implementation
+- oauth2
+- bullmq
+- add metadata for swagger
+- request tracking
+- deauthorize tokens after generating new ones (access)

@@ -36,6 +36,12 @@ export class AuthService {
   async login(body: UserLoginDTO) {
     const user = await this.user.findOneByEmail(body.email);
     if (!user) throw new NotFoundException();
+    if (
+      !(await argon2.verify(user.password, body.password, {
+        secret: Buffer.from(this.config.getOrThrow("PASSWORD_HASH_SECRET")),
+      }))
+    )
+      throw new UnauthorizedException();
 
     const access = await this.generateAuthJwt({
       sub: user.id,
@@ -74,6 +80,15 @@ export class AuthService {
     return plainToInstance(UserDTO, user, { excludeExtraneousValues: true });
   }
 
+  /**
+   * @author przdev7
+   *
+   *
+   * @description
+   * Refresh nie tworzy nowych danych
+   * przekazuje te same dane w tym familyId i ten sam payload do nowych tokenow
+   */
+
   async refresh(session: JwtRefreshPayload) {
     const user = await this.user.findOne(session.sub);
     if (!user) throw new UnauthorizedException();
@@ -87,6 +102,15 @@ export class AuthService {
     };
   }
 
+  /**
+   * @author przdev7
+   *
+   *
+   * @description
+   * Deautoryzacja tokenu o opiera sie o JWTID refresh tokena,
+   * JWTID trafia do cache'u w ktorym jest do wygasniecia jego waznosci
+   * Auth Guard sprawdza blacklist przy kazdym zapytaniu do zabezpieczonego endpointu
+   */
   async logout(user: JwtPayload, session: JwtRefreshPayload) {
     await this.cache.set(`${BLACKLIST_KEY}:${user.sub}`, user.jti, user.exp * 1000 - Date.now());
     await this.cache.set<ITokenRotationCachePayload>(
@@ -99,6 +123,15 @@ export class AuthService {
     );
   }
 
+  /**
+   * @author przdev7
+   *
+   *
+   * @description
+   * Podczas tworzenia access tokenu
+   * generowany jest unikalny id (JWTID) ktory pomaga zidentyfikowac request,
+   * token jest wazny przez 10min
+   */
   private async generateAuthJwt(payload: JwtRawPayload): Promise<string> {
     const jti = crypto.randomUUID();
     const token = await this.jwt.signAsync(payload, {
@@ -112,6 +145,16 @@ export class AuthService {
     return token;
   }
 
+  /**
+   * @author przdev7
+   *
+   *
+   * @description
+   * Podczas logowania jest generowany "familyId",
+   * familyId jest UUID ktore reprezentuje dana sesje urzadzenia,
+   * familyId jest ustawiane jak KEY i trafia do cache'u do redisa
+   * wraz z JWTID oraz inforamacja czy token jest dezaktywowany
+   */
   private async generateRefreshJwt(payload: JwtRefreshRawPayload): Promise<string> {
     const jti = crypto.randomUUID();
     const token = await this.jwt.signAsync(payload, {
@@ -122,7 +165,12 @@ export class AuthService {
       expiresIn: EXPIRES_IN_7_DAYS,
     });
 
-    await this.cache.set<ITokenRotationCachePayload>(`${FAMILY_KEY}:${payload.familyId}`, { jti: jti, revoked: false });
+    //dodaje JWTID i familyId na 7 dni do cachea
+    await this.cache.set<ITokenRotationCachePayload>(
+      `${FAMILY_KEY}:${payload.familyId}`,
+      { jti: jti, revoked: false },
+      EXPIRES_IN_7_DAYS * 1000,
+    );
     return token;
   }
 }

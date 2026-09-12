@@ -1,19 +1,20 @@
-import { Body, Controller, HttpCode, Post, Res } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, Post, Res } from "@nestjs/common";
 import type { Response } from "express";
 import { AuthService } from "./auth.service";
 import { UserLoginDTO } from "./dto/login";
 import { CurrentSession, CurrentUser } from "@common";
 import { EXPIRES_IN_10MINS, EXPIRES_IN_7_DAYS, JwtPayload, JwtRefreshPayload } from "@types";
 import { CreateUserDto } from "@modules/users/dto/create-user.dto";
+import { isPublic } from "@common";
 
 @Controller("auth")
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
+  @isPublic()
   @Post("login")
   @HttpCode(200)
   async login(@Res({ passthrough: true }) res: Response, @Body() body: UserLoginDTO) {
-    console.log(body);
     const { access, refresh } = await this.auth.login(body);
     const now = Date.now();
 
@@ -34,11 +35,11 @@ export class AuthController {
       });
   }
 
+  @isPublic()
   @Post("signup")
   @HttpCode(201)
   async signUp(@Body() body: CreateUserDto) {
     await this.auth.signup(body);
-
     return await this.auth.login(body);
   }
 
@@ -65,6 +66,12 @@ export class AuthController {
       })
       .status(200)
       .send();
+  }
+
+  @Get("me")
+  @HttpCode(200)
+  async me(@CurrentUser() user: JwtPayload) {
+    return user;
   }
 
   @Post("logout")

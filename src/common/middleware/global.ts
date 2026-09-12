@@ -12,9 +12,7 @@ export class GlobalMiddleware implements NestMiddleware {
     const logger = new LoggerService(GlobalMiddleware.name, this.config);
     req.id = crypto.randomUUID();
     //TODO: add user
-    logger.log(
-      `${req.id}: [ ip: ${req.ip}, path: ${req.originalUrl}, method: ${req.method}, body: ${JSON.stringify(req.body)} | Date: ${Date.now()} ]`,
-    );
+    logger.log(`${req.id}: [ ip: ${req.ip}, path: ${req.originalUrl}, method: ${req.method} | Date: ${Date.now()} ]`);
 
     next();
   }
