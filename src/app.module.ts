@@ -1,14 +1,17 @@
 import { Module, type MiddlewareConsumer, type NestModule } from "@nestjs/common";
-import { AppController } from "./modules/main/app.controller";
-import { AppService } from "./modules/main/app.service";
+import { LoggerModule, LoggerService, AppService, AppController, AuthModule } from "@modules";
 import { MongooseModule } from "@nestjs/mongoose";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { join } from "path";
 import Joi from "joi";
 import { type Config } from "@types";
 import { GlobalMiddleware } from "@common";
-import { LoggerModule, LoggerService } from "@modules/logger";
 import { Connection } from "mongoose";
+import { CacheModule } from "@nestjs/cache-manager";
+import KeyvRedis from "@keyv/redis";
+import { JwtModule } from "@nestjs/jwt";
+import { APP_GUARD } from "@nestjs/core";
+import { JwtAuthGuard } from "@common";
 
 const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : ".env";
 
@@ -20,6 +23,7 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
       validationSchema: Joi.object<Config>({
         NODE_ENV: Joi.string().valid("production", "dev").required(),
         PORT_MAIN: Joi.number().port().required(),
+        PASSWORD_HASH_SECRET: Joi.string().required(),
 
         // DB_HOST: Joi.string().required(),
         DB_NAME: Joi.string().required(),
@@ -30,8 +34,8 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
 
         WEBHOOK: Joi.string().uri().required(),
 
-        // REDIS_URI: Joi.string().required(),
-        // REDIS_PORT: Joi.number().port().required(),
+        REDIS_URI: Joi.string().required(),
+        REDIS_PORT: Joi.number().port().required(),
 
         JWT_SECRET: Joi.string().required(),
         JWT_REFRESH_SECRET: Joi.string().required(),
@@ -57,7 +61,7 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
           });
 
           connection.on("error", (error) => {
-            logger.error(`MongoDB connection error: ${error.message}`);
+            logger.error(`MongoDB connection error: ${JSON.stringify(error)}`);
           });
 
           connection.on("disconnected", () => {
@@ -68,9 +72,42 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
         },
       }),
     }),
+
+    CacheModule.registerAsync({
+      isGlobal: true,
+      imports: [LoggerModule.register("Cache")],
+      inject: [ConfigService, LoggerService],
+      useFactory: async (config: ConfigService<Config>, logger: LoggerService) => {
+        const store = new KeyvRedis(config.getOrThrow("REDIS_URI", { infer: true }), {
+          throwOnConnectError: true,
+          throwOnErrors: true,
+        });
+
+        store.set("healthcheck", "healthcheck", 1000);
+        store.on("connect", () => logger.log("Connected to redis"));
+        store.on("error", (error) => logger.error(error));
+
+        return {
+          stores: [store],
+          ttl: 600000,
+        };
+      },
+    }),
+
+    JwtModule.register({
+      global: true,
+    }),
+
+    AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
