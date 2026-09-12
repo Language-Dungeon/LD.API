@@ -1,8 +1,9 @@
-- Remove hard coded paths
 - Unit tests
 - Logger implementation
 - oauth2
 - bullmq
 - add metadata for swagger
 - request tracking
+- permissions
+- roles
 - deauthorize tokens after generating new ones (access)

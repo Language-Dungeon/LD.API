@@ -3,16 +3,16 @@ import type { Response } from "express";
 import { AuthService } from "./auth.service";
 import { UserLoginDTO } from "./dto/login";
 import { CurrentSession, CurrentUser } from "@common";
-import { EXPIRES_IN_10MINS, EXPIRES_IN_7_DAYS, JwtPayload, JwtRefreshPayload } from "@types";
+import { EXPIRES_IN_10MINS, EXPIRES_IN_7_DAYS, JwtPayload, JwtRefreshPayload, ROUTES } from "@types";
 import { CreateUserDto } from "@modules/users/dto/create-user.dto";
 import { isPublic } from "@common";
 
-@Controller("auth")
+@Controller(ROUTES.AUTH.BASE)
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
   @isPublic()
-  @Post("login")
+  @Post(ROUTES.AUTH.LOGIN)
   @HttpCode(200)
   async login(@Res({ passthrough: true }) res: Response, @Body() body: UserLoginDTO) {
     const { access, refresh } = await this.auth.login(body);
@@ -36,14 +36,14 @@ export class AuthController {
   }
 
   @isPublic()
-  @Post("signup")
+  @Post(ROUTES.AUTH.REGISTER)
   @HttpCode(201)
   async signUp(@Body() body: CreateUserDto) {
     await this.auth.signup(body);
     return await this.auth.login(body);
   }
 
-  @Post("refresh")
+  @Post(ROUTES.AUTH.REFRESH)
   @HttpCode(200)
   async refresh(@CurrentSession() session: JwtRefreshPayload, @Res({ passthrough: true }) res: Response) {
     const { access, refresh } = await this.auth.refresh(session);
@@ -68,13 +68,13 @@ export class AuthController {
       .send();
   }
 
-  @Get("me")
+  @Get(ROUTES.AUTH.ME)
   @HttpCode(200)
   async me(@CurrentUser() user: JwtPayload) {
     return user;
   }
 
-  @Post("logout")
+  @Post(ROUTES.AUTH.LOGOUT)
   @HttpCode(200)
   async logout(@CurrentUser() user: JwtPayload, @CurrentSession() session: JwtRefreshPayload, @Res() res: Response) {
     await this.auth.logout(user, session);

@@ -14,7 +14,7 @@ export type JwtPayload = Required<StrictJwtPayload> & Omit<IUserAttributes, "pas
 export type JwtRawPayload = Omit<JwtPayload, "exp" | "iat" | "iss" | "aud" | "jti" | number>;
 
 export type JwtRefreshPayload = Required<StrictJwtPayload> & {
-  /** Stable identifier shared by all refresh tokens issued by one login session. */
+  /**identifier shared by all refresh tokens issued by one login session. */
   familyId: string;
 };
 
