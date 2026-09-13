@@ -1,19 +1,19 @@
 export const permissions = {
-  ALL: 0,
-  MANAGE_PERMISSIONS: 1,
-  READ_USERS: 2,
-  UPDATE_USERS: 3,
-  DELETE_USERS: 4,
-  WRITE_LESSONS: 5,
+  ALL: "ALL",
+  MANAGE_PERMISSIONS: "MANAGE_PERMISSIONS",
+  READ_USERS: "USERS:READ",
+  UPDATE_USERS: "USERS:UPDATE",
+  DELETE_USERS: "USERS:DELETE",
+  WRITE_LESSONS: "LESSONS:WRITE",
 } as const;
 
 export type PermissionKeys = keyof typeof permissions;
 export type PermissionValue = (typeof permissions)[PermissionKeys];
-export type Permissions = PermissionKeys | PermissionValue;
 
-export type Roles = "user" | "admin" | "tester" | "developer";
+export const ROLES = ["user", "admin", "tester", "developer"] as const;
+export type Roles = (typeof ROLES)[number];
 
-export const rolesPermissions: Record<Roles, Permissions[]> = {
+export const rolesPermissions: Record<Roles, PermissionValue[]> = {
   admin: [permissions.ALL],
   developer: [permissions.READ_USERS, permissions.WRITE_LESSONS],
   user: [],

@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import mongoose, { HydratedDocument } from "mongoose";
+import { PermissionValue, ROLES, type Roles } from "@types";
 
 export interface IUserAttributes {
   // id: string;
@@ -23,11 +24,11 @@ export class User implements IUserAttributes {
   @Prop({ required: true, type: mongoose.Schema.Types.Boolean })
   activated!: boolean;
 
-  // @Prop({ required: true, type: mongoose.Schema.Types.Date })
-  // createdAt!: Date;
+  @Prop({ required: false, enum: ROLES, default: ROLES[0] }) // ROLES[0] == "user"
+  role!: Roles;
 
-  // @Prop({ required: true, type: mongoose.Schema.Types.Date })
-  // updatedAt!: Date;
+  @Prop({ required: false, type: Object, default: {} })
+  permissions_overrides!: Record<PermissionValue, boolean>;
 }
 
 export type UserDocument = HydratedDocument<User>;

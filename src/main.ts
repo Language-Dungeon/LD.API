@@ -58,3 +58,7 @@ async function bootstrap() {
   }
 }
 bootstrap();
+
+const rec: Record<string, string> = {
+  dsd: "",
+};
