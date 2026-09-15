@@ -2,6 +2,7 @@ export const APP_NAME = "LD.API";
 
 /* providers for custom decorators */
 export const IS_PUBLIC_PROVIDER = "isPublic";
+export const REQUIRED_PERMISSIONS = "requiredPermissions";
 export const USER_PROVIDER = "UserRepository";
 
 /* redis keys */

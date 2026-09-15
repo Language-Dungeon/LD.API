@@ -8,6 +8,8 @@ export interface IUserAttributes {
   email: string;
   password: string;
   activated: boolean;
+  role: Roles;
+  permissions_overrides?: Record<PermissionValue, boolean>;
 }
 
 @Schema({ timestamps: true })
@@ -28,7 +30,7 @@ export class User implements IUserAttributes {
   role!: Roles;
 
   @Prop({ required: false, type: Object, default: {} })
-  permissions_overrides!: Record<PermissionValue, boolean>;
+  permissions_overrides?: Record<PermissionValue, boolean>;
 }
 
 export type UserDocument = HydratedDocument<User>;
