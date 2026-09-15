@@ -4,6 +4,4 @@
 - bullmq
 - add metadata for swagger
 - request tracking
-- permissions
-- roles
-- deauthorize tokens after generating new ones (access)
+- implement permission_overrides

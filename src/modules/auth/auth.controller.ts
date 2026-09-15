@@ -2,16 +2,16 @@ import { Body, Controller, Get, HttpCode, Post, Res } from "@nestjs/common";
 import type { Response } from "express";
 import { AuthService } from "./auth.service";
 import { UserLoginDTO } from "./dto/login";
-import { CurrentSession, CurrentUser } from "@common";
+import { CurrentSession, CurrentUser, SkipRefreshRoute } from "@common";
 import { EXPIRES_IN_10MINS, EXPIRES_IN_7_DAYS, JwtPayload, JwtRefreshPayload, ROUTES } from "@types";
 import { CreateUserDto } from "@modules/users/dto/create-user.dto";
-import { isPublic } from "@common";
+import { Public } from "@common";
 
 @Controller(ROUTES.AUTH.BASE)
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
-  @isPublic()
+  @Public()
   @Post(ROUTES.AUTH.LOGIN)
   @HttpCode(200)
   async login(@Res({ passthrough: true }) res: Response, @Body() body: UserLoginDTO) {
@@ -35,7 +35,6 @@ export class AuthController {
       });
   }
 
-  @isPublic()
   @Post(ROUTES.AUTH.REGISTER)
   @HttpCode(201)
   async signUp(@Body() body: CreateUserDto) {
@@ -44,6 +43,7 @@ export class AuthController {
   }
 
   @Post(ROUTES.AUTH.REFRESH)
+  @SkipRefreshRoute()
   @HttpCode(200)
   async refresh(@CurrentSession() session: JwtRefreshPayload, @Res({ passthrough: true }) res: Response) {
     const { access, refresh } = await this.auth.refresh(session);
