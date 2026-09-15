@@ -47,8 +47,13 @@ export class PermissionsGuard implements CanActivate {
 
     const permissions = this.getAllPermissionsFromRole(user.role);
     const hasAllPermissions = requiredPermissionsValues.every((perm) => permissions.includes(perm));
+    const hasOverridePermissions = requiredPermissionsValues.every((perm) => {
+      if (!user.permissions_overrides) return true;
+      if (user.permissions_overrides[perm] === false || user.permissions_overrides[perm] === undefined)
+        throw new UnauthorizedException();
+    });
 
-    if (!hasAllPermissions) throw new UnauthorizedException();
+    if (!hasAllPermissions && hasOverridePermissions) throw new UnauthorizedException();
     return true;
   }
 
