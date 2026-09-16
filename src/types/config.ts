@@ -3,6 +3,7 @@ export interface Config {
   PORT_MAIN: number;
   WEBHOOK: string;
   PASSWORD_HASH_SECRET: string;
+  ENCRYPTION_SECRET: string;
 
   DB_URI: string;
   DB_NAME: string;

@@ -1,12 +1,12 @@
-import { UsersService } from "@modules/users/users.service";
+import { UsersService, CryptoService } from "@modules";
 import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { UserLoginDTO } from "./dto/login";
 import { Cache } from "@nestjs/cache-manager";
-import * as argon2 from "argon2";
-import { randomBytes } from "node:crypto";
-
+import { plainToInstance } from "class-transformer";
+import { CreateUserDto } from "@modules/users/dto/create-user.dto";
+import { UserDTO } from "@modules/users/dto/user.dto";
 import {
   type JwtRawPayload,
   BLACKLIST_KEY,
@@ -19,10 +19,6 @@ import {
   JwtRefreshPayload,
   JwtRefreshRawPayload,
 } from "@types";
-import { CreateUserDto } from "@modules/users/dto/create-user.dto";
-import { promisify } from "node:util";
-import { plainToInstance } from "class-transformer";
-import { UserDTO } from "@modules/users/dto/user.dto";
 
 @Injectable()
 export class AuthService {
@@ -31,17 +27,13 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly cache: Cache,
     private readonly user: UsersService,
+    private readonly crypto: CryptoService,
   ) {}
 
   async login(body: UserLoginDTO) {
     const user = await this.user.findOneByEmail(body.email);
     if (!user) throw new NotFoundException();
-    if (
-      !(await argon2.verify(user.password, body.password, {
-        secret: Buffer.from(this.config.getOrThrow("PASSWORD_HASH_SECRET")),
-      }))
-    )
-      throw new UnauthorizedException();
+    if (!(await this.crypto.verifyHash(user.password, body.password))) throw new UnauthorizedException();
 
     const access = await this.generateAuthJwt({
       sub: user.id,
@@ -64,17 +56,10 @@ export class AuthService {
     const existingUser = await this.user.findOneByEmail(body.email);
     if (existingUser) throw new ConflictException();
 
-    const genSalt = promisify(randomBytes);
-
     const payload: CreateUserDto = {
-      email: body.email,
+      email: await this.crypto.encrypt(body.email),
       username: body.username,
-      password: await argon2.hash(body.password, {
-        type: argon2.argon2id,
-        salt: await genSalt(16),
-        parallelism: 4,
-        secret: Buffer.from(this.config.getOrThrow<string>("PASSWORD_HASH_SECRET"), "utf8"),
-      }),
+      password: await this.crypto.hash(body.password),
     };
 
     const user = await this.user.create(payload);

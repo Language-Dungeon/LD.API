@@ -24,6 +24,7 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
         NODE_ENV: Joi.string().valid("production", "dev").required(),
         PORT_MAIN: Joi.number().port().required(),
         PASSWORD_HASH_SECRET: Joi.string().required(),
+        ENCRYPTION_SECRET: Joi.string().required(),
 
         // DB_HOST: Joi.string().required(),
         DB_NAME: Joi.string().required(),
