@@ -4,8 +4,8 @@ declare global {
   namespace Express {
     interface Request {
       id: string;
-      user: JwtPayload;
-      session: JwtRefreshPayload;
+      user: JwtPayload | undefined;
+      session: JwtRefreshPayload | undefined;
     }
   }
 }

@@ -48,6 +48,8 @@ export class AuthService {
       email: user.email,
       username: user.username,
       activated: user.activated,
+      role: user.role,
+      permissions_overrides: user.permissions_overrides ?? undefined,
     });
 
     const refresh = await this.generateRefreshJwt({
@@ -93,11 +95,11 @@ export class AuthService {
     const user = await this.user.findOne(session.sub);
     if (!user) throw new UnauthorizedException();
 
-    const { id, username, email, activated } = user;
+    const { id, username, email, activated, role, permissions_overrides } = user;
     const { sub, familyId } = session;
 
     return {
-      access: await this.generateAuthJwt({ sub: id, email, username, activated }),
+      access: await this.generateAuthJwt({ sub: id, email, username, activated, role, permissions_overrides }),
       refresh: await this.generateRefreshJwt({ sub, familyId }),
     };
   }

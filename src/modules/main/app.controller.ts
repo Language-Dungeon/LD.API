@@ -1,9 +1,9 @@
 import { Controller, Get } from "@nestjs/common";
 import { AppService } from "./app.service";
-import { isPublic } from "@common";
+import { Public } from "@common";
 import { ROUTES } from "@types";
 
-@isPublic()
+@Public()
 @Controller(ROUTES.MAIN.BASE)
 export class AppController {
   constructor(private readonly appService: AppService) {}

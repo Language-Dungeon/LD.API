@@ -14,6 +14,7 @@ import {
   type JwtRefreshPayload,
   type JwtPayload,
   BLACKLIST_KEY,
+  SKIP_REFRESH_ROUTE,
 } from "@types";
 
 @Injectable()
@@ -27,17 +28,18 @@ export class JwtAuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<Request>();
-
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_PROVIDER, [
       context.getHandler(),
       context.getClass(),
     ]);
+    const skipRefreshRoute = this.reflector.getAllAndOverride<boolean>(SKIP_REFRESH_ROUTE, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
-    if (isPublic) {
-      return true;
-    }
+    if (isPublic) return true;
 
-    if (req.path !== "/auth/refresh") {
+    if (!skipRefreshRoute) {
       const access = extractAccesToken(req);
       await this.verifyAccess(access, req);
     }
@@ -76,7 +78,6 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException();
     }
 
-    console.log(session.exp * 1000 - Date.now());
     if (payload.jti !== session.jti || payload.revoked) {
       await this.cache.set<ITokenRotationCachePayload>(
         `${FAMILY_KEY}:${session.familyId}`,

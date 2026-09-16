@@ -5,7 +5,7 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { join } from "path";
 import Joi from "joi";
 import { type Config } from "@types";
-import { GlobalMiddleware } from "@common";
+import { GlobalMiddleware, PermissionsGuard } from "@common";
 import { Connection } from "mongoose";
 import { CacheModule } from "@nestjs/cache-manager";
 import KeyvRedis from "@keyv/redis";
@@ -106,6 +106,10 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionsGuard,
     },
   ],
 })
