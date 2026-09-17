@@ -33,7 +33,6 @@ export class AuthService {
 
   async login(body: UserLoginDTO) {
     const user = await this.user.findOneByEmail(body.email);
-    console.log(body.email, this.crypto.encrypt_hmac(body.email));
     if (!user) throw new NotFoundException();
     if (!(await this.crypto.verifyHash(user.password, body.password))) throw new UnauthorizedException();
 
