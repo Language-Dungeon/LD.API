@@ -5,13 +5,13 @@
 To install dependencies:
 
 ```bash
-bun install
+npm install
 ```
 
 To run:
 
 ```bash
-bun run start:dev
+npm run start:dev
 ```
 
 ## Run with docker
