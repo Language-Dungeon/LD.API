@@ -1,5 +1,5 @@
 import { Module, type MiddlewareConsumer, type NestModule } from "@nestjs/common";
-import { LoggerModule, LoggerService, AppService, AppController, AuthModule } from "@modules";
+import { LoggerModule, LoggerService, AppService, AppController, AuthModule, CryptoModule } from "@modules";
 import { MongooseModule } from "@nestjs/mongoose";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { join } from "path";
@@ -24,6 +24,7 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
         NODE_ENV: Joi.string().valid("production", "dev").required(),
         PORT_MAIN: Joi.number().port().required(),
         PASSWORD_HASH_SECRET: Joi.string().required(),
+        EMAIL_HMAC_SECRET: Joi.string().required(),
         ENCRYPTION_SECRET: Joi.string().required(),
 
         // DB_HOST: Joi.string().required(),
@@ -100,6 +101,7 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
     }),
 
     AuthModule,
+    CryptoModule,
   ],
   controllers: [AppController],
   providers: [

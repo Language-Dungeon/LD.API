@@ -1,4 +1,3 @@
-import { UsersService, CryptoService } from "@modules";
 import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
@@ -7,6 +6,8 @@ import { Cache } from "@nestjs/cache-manager";
 import { plainToInstance } from "class-transformer";
 import { CreateUserDto } from "@modules/users/dto/create-user.dto";
 import { UserDTO } from "@modules/users/dto/user.dto";
+import { CryptoService } from "@modules/crypto";
+import { UsersService } from "@modules/users";
 import {
   type JwtRawPayload,
   BLACKLIST_KEY,
@@ -26,12 +27,13 @@ export class AuthService {
     private readonly config: ConfigService<Config>,
     private readonly jwt: JwtService,
     private readonly cache: Cache,
-    private readonly user: UsersService,
     private readonly crypto: CryptoService,
+    private readonly user: UsersService,
   ) {}
 
   async login(body: UserLoginDTO) {
     const user = await this.user.findOneByEmail(body.email);
+    console.log(body.email, this.crypto.encrypt_hmac(body.email));
     if (!user) throw new NotFoundException();
     if (!(await this.crypto.verifyHash(user.password, body.password))) throw new UnauthorizedException();
 
@@ -57,13 +59,12 @@ export class AuthService {
     if (existingUser) throw new ConflictException();
 
     const payload: CreateUserDto = {
-      email: await this.crypto.encrypt(body.email),
       username: body.username,
-      password: await this.crypto.hash(body.password),
+      email: body.email,
+      password: body.password,
     };
 
     const user = await this.user.create(payload);
-
     return plainToInstance(UserDTO, user, { excludeExtraneousValues: true });
   }
 
