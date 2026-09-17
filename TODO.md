@@ -4,5 +4,4 @@
 - bullmq
 - add metadata for swagger
 - request tracking
-- implement permission_overrides
 - encrypt/decrypt

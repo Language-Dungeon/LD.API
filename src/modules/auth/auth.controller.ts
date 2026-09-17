@@ -34,7 +34,7 @@ export class AuthController {
         expires: new Date(now + EXPIRES_IN_7_DAYS * 1000), //7days
       });
   }
-
+  @Public()
   @Post(ROUTES.AUTH.REGISTER)
   @HttpCode(201)
   async signUp(@Body() body: CreateUserDto) {

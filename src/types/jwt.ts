@@ -10,7 +10,7 @@ type StrictJwtPayload = Omit<BaseJwtPayload, string> & {
   jti?: string;
 };
 
-export type JwtPayload = Required<StrictJwtPayload> & Omit<IUserAttributes, "password">;
+export type JwtPayload = Required<StrictJwtPayload> & Omit<IUserAttributes, "password" | "email_hmac">;
 export type JwtRawPayload = Omit<JwtPayload, "exp" | "iat" | "iss" | "aud" | "jti" | number>;
 
 export type JwtRefreshPayload = Required<StrictJwtPayload> & {

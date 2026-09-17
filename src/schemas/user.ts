@@ -6,6 +6,7 @@ export interface IUserAttributes {
   // id: string;
   username: string;
   email: string;
+  email_hmac: string;
   password: string;
   activated: boolean;
   role: Roles;
@@ -19,6 +20,9 @@ export class User implements IUserAttributes {
 
   @Prop({ required: true, unique: true, type: mongoose.Schema.Types.String })
   email!: string;
+
+  @Prop({ required: true, unique: true, type: mongoose.Schema.Types.String })
+  email_hmac!: string;
 
   @Prop({ required: true, type: mongoose.Schema.Types.String })
   password!: string;
