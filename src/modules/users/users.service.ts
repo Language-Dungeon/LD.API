@@ -1,5 +1,4 @@
 import { Injectable } from "@nestjs/common";
-import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { InjectModel } from "@nestjs/mongoose";
 import { User, UserDocument } from "../../schemas/user";
@@ -13,12 +12,12 @@ export class UsersService {
     private readonly crypto: CryptoService,
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(email: string, username: string, password: string | null): Promise<UserDocument> {
     return await this.user.create({
-      username: createUserDto.username,
-      email_hmac: this.crypto.encrypt_hmac(createUserDto.email),
-      email: await this.crypto.encrypt(createUserDto.email),
-      password: await this.crypto.hash(createUserDto.password),
+      username: username,
+      email_hmac: this.crypto.encrypt_hmac(email),
+      email: await this.crypto.encrypt(email),
+      password: password != null ? await this.crypto.hash(password) : null,
       activated: false,
     });
   }

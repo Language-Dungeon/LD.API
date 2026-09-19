@@ -14,6 +14,10 @@ export interface Config {
   REDIS_URI: string;
   REDIS_PORT: number;
 
+  GOOGLE_CLIENT_ID: string;
+  GOOGLE_CLIENT_SECRET: string;
+  GOOGLE_REDIRECT_URI: string;
+
   JWT_SECRET: string;
   JWT_REFRESH_SECRET: string;
   COOKIE_SECRET: string;

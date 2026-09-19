@@ -1,8 +1,8 @@
-import { Body, Controller, Get, HttpCode, Post, Res } from "@nestjs/common";
-import type { Response } from "express";
+import { Body, Controller, Get, HttpCode, Post, Req, Res, UseGuards } from "@nestjs/common";
+import type { Request, Response } from "express";
 import { AuthService } from "./auth.service";
 import { UserLoginDTO } from "./dto/login";
-import { CurrentSession, CurrentUser, SkipRefreshRoute } from "@common";
+import { CurrentSession, CurrentUser, GoogleGuard, SkipRefreshRoute } from "@common";
 import { EXPIRES_IN_10MINS, EXPIRES_IN_7_DAYS, JwtPayload, JwtRefreshPayload, ROUTES } from "@types";
 import { CreateUserDto } from "@modules/users/dto/create-user.dto";
 import { Public } from "@common";
@@ -23,26 +23,56 @@ export class AuthController {
         signed: true,
         httpOnly: true,
         secure: true,
-        sameSite: true,
-        expires: new Date(now + EXPIRES_IN_10MINS * 1000), //10mins
+        sameSite: "lax",
+        expires: new Date(now + EXPIRES_IN_10MINS * 1000), //10min
       })
       .cookie("refresh_token", refresh, {
         signed: true,
         httpOnly: true,
         secure: true,
-        sameSite: true,
-        expires: new Date(now + EXPIRES_IN_7_DAYS * 1000), //7days
+        sameSite: "lax",
+        expires: new Date(now + EXPIRES_IN_7_DAYS * 1000), //7dni
       });
   }
   @Public()
   @Post(ROUTES.AUTH.REGISTER)
   @HttpCode(201)
   async signUp(@Body() body: CreateUserDto) {
-    await this.auth.signup(body);
-    return await this.auth.login(body);
+    return await this.auth.signup(body);
   }
 
-  @Post(ROUTES.AUTH.REFRESH)
+  @Public()
+  @Get(ROUTES.AUTH.GOOGLE)
+  @UseGuards(GoogleGuard)
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  async google() {}
+
+  @Public()
+  @UseGuards(GoogleGuard)
+  @Get(ROUTES.AUTH.GOOGLE_CALLBACK)
+  async callback(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const { access, refresh } = await this.auth.loginGoogle(req);
+    const now = Date.now();
+
+    return res
+      .cookie("access_token", access, {
+        signed: true,
+        httpOnly: true,
+        secure: true,
+        sameSite: "lax",
+        expires: new Date(now + EXPIRES_IN_10MINS * 1000), //10min
+      })
+      .cookie("refresh_token", refresh, {
+        signed: true,
+        httpOnly: true,
+        secure: true,
+        sameSite: "lax",
+        expires: new Date(now + EXPIRES_IN_7_DAYS * 1000), //7dni
+      })
+      .redirect("http://localhost:3000/auth/me");
+  }
+
+  @Get(ROUTES.AUTH.REFRESH)
   @SkipRefreshRoute()
   @HttpCode(200)
   async refresh(@CurrentSession() session: JwtRefreshPayload, @Res({ passthrough: true }) res: Response) {
@@ -54,15 +84,15 @@ export class AuthController {
         signed: true,
         httpOnly: true,
         secure: true,
-        sameSite: true,
-        expires: new Date(now + EXPIRES_IN_10MINS * 1000), //10mins
+        sameSite: "lax",
+        expires: new Date(now + EXPIRES_IN_10MINS * 1000), //10min
       })
       .cookie("refresh_token", refresh, {
         signed: true,
         httpOnly: true,
         secure: true,
-        sameSite: true,
-        expires: new Date(now + EXPIRES_IN_7_DAYS * 1000), //7days
+        sameSite: "lax",
+        expires: new Date(now + EXPIRES_IN_7_DAYS * 1000), //7dni
       })
       .status(200)
       .send();

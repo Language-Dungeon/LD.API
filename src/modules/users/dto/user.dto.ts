@@ -15,6 +15,7 @@ export class UserDTO implements IUserAttributes {
   email!: string;
 
   @IsString()
+  @Exclude()
   email_hmac!: string;
 
   @IsString()

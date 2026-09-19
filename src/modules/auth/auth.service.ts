@@ -1,13 +1,20 @@
-import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { UserLoginDTO } from "./dto/login";
 import { Cache } from "@nestjs/cache-manager";
 import { plainToInstance } from "class-transformer";
-import { CreateUserDto } from "@modules/users/dto/create-user.dto";
 import { UserDTO } from "@modules/users/dto/user.dto";
 import { CryptoService } from "@modules/crypto";
 import { UsersService } from "@modules/users";
+import type { Request } from "express";
+
 import {
   type JwtRawPayload,
   BLACKLIST_KEY,
@@ -20,6 +27,8 @@ import {
   JwtRefreshPayload,
   JwtRefreshRawPayload,
 } from "@types";
+import { CreateUserDto } from "@modules/users/dto/create-user.dto";
+import { Profile } from "passport-google-oauth20";
 
 @Injectable()
 export class AuthService {
@@ -31,9 +40,12 @@ export class AuthService {
     private readonly user: UsersService,
   ) {}
 
+  //TODO: Add finding by username
   async login(body: UserLoginDTO) {
     const user = await this.user.findOneByEmail(body.email);
     if (!user) throw new NotFoundException();
+
+    if (!user.password) throw new UnauthorizedException("please use google login");
     if (!(await this.crypto.verifyHash(user.password, body.password))) throw new UnauthorizedException();
 
     const access = await this.generateAuthJwt({
@@ -57,14 +69,59 @@ export class AuthService {
     const existingUser = await this.user.findOneByEmail(body.email);
     if (existingUser) throw new ConflictException();
 
-    const payload: CreateUserDto = {
-      username: body.username,
-      email: body.email,
-      password: body.password,
-    };
-
-    const user = await this.user.create(payload);
+    const user = await this.user.create(body.email, body.username, body.password);
     return plainToInstance(UserDTO, user, { excludeExtraneousValues: true });
+  }
+
+  /**
+   * @author przdev7
+   *
+   * @description
+   * Tworzy nowego usera (gdy nie ma go jeszcze w bazie) i jednoczesnie loguje juz istniejacych uzytkownikow
+   */
+  async loginGoogle(req: Request) {
+    const profile = req.user as unknown as Profile;
+    const emails = profile.emails;
+    if (emails === undefined || emails[0] === undefined)
+      throw new InternalServerErrorException("Not found email for this account, please contact support");
+
+    const mainEmail = emails[0].value;
+    const user = await this.user.findOneByEmail(mainEmail);
+
+    if (user) {
+      const access = await this.generateAuthJwt({
+        sub: user.id,
+        email: mainEmail,
+        username: user.username,
+        activated: user.activated,
+        role: user.role,
+        permissions_overrides: user.permissions_overrides ?? undefined,
+      });
+
+      const refresh = await this.generateRefreshJwt({
+        sub: user.id,
+        familyId: crypto.randomUUID(),
+      });
+
+      return { access, refresh };
+    }
+
+    const createdUser = await this.user.create(mainEmail, profile.displayName, null);
+    const access = await this.generateAuthJwt({
+      sub: createdUser.id,
+      email: mainEmail,
+      username: createdUser.username,
+      activated: createdUser.activated,
+      role: createdUser.role,
+      permissions_overrides: createdUser.permissions_overrides ?? undefined,
+    });
+
+    const refresh = await this.generateRefreshJwt({
+      sub: createdUser.id,
+      familyId: crypto.randomUUID(),
+    });
+
+    return { access, refresh };
   }
 
   /**
@@ -82,9 +139,17 @@ export class AuthService {
 
     const { id, username, email, activated, role, permissions_overrides } = user;
     const { sub, familyId } = session;
+    const decryptedEmail = await this.crypto.decrypt(email);
 
     return {
-      access: await this.generateAuthJwt({ sub: id, email, username, activated, role, permissions_overrides }),
+      access: await this.generateAuthJwt({
+        sub: id,
+        email: decryptedEmail,
+        username,
+        activated,
+        role,
+        permissions_overrides,
+      }),
       refresh: await this.generateRefreshJwt({ sub, familyId }),
     };
   }
@@ -123,8 +188,8 @@ export class AuthService {
     const jti = crypto.randomUUID();
     const token = await this.jwt.signAsync(payload, {
       secret: this.config.getOrThrow("JWT_SECRET"),
-      issuer: "backend:revenger",
-      audience: "backend:revenger",
+      issuer: "LD.API",
+      audience: "LD.API",
       jwtid: jti,
       expiresIn: EXPIRES_IN_10MINS,
     });
@@ -146,8 +211,8 @@ export class AuthService {
     const jti = crypto.randomUUID();
     const token = await this.jwt.signAsync(payload, {
       secret: this.config.getOrThrow("JWT_REFRESH_SECRET"),
-      issuer: "backend:revenger",
-      audience: "backend:revenger",
+      issuer: "LD.API",
+      audience: "LD.API",
       jwtid: jti,
       expiresIn: EXPIRES_IN_7_DAYS,
     });
@@ -159,5 +224,9 @@ export class AuthService {
       EXPIRES_IN_7_DAYS * 1000,
     );
     return token;
+  }
+
+  async userExists(email: string): Promise<boolean> {
+    return (await this.user.findOneByEmail(email)) === null ? false : true;
   }
 }

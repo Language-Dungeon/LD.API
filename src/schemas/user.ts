@@ -7,7 +7,7 @@ export interface IUserAttributes {
   username: string;
   email: string;
   email_hmac: string;
-  password: string;
+  password: string | null;
   activated: boolean;
   role: Roles;
   permissions_overrides?: Record<PermissionValue, boolean>;
@@ -24,8 +24,8 @@ export class User implements IUserAttributes {
   @Prop({ required: true, unique: true, type: mongoose.Schema.Types.String })
   email_hmac!: string;
 
-  @Prop({ required: true, type: mongoose.Schema.Types.String })
-  password!: string;
+  @Prop({ required: false, allowNull: true, type: mongoose.Schema.Types.String })
+  password!: string | null;
 
   @Prop({ required: true, type: mongoose.Schema.Types.Boolean })
   activated!: boolean;
@@ -35,6 +35,9 @@ export class User implements IUserAttributes {
 
   @Prop({ required: false, type: Object, default: {} })
   permissions_overrides?: Record<PermissionValue, boolean>;
+
+  // @Prop({ required: true, type: mongoose.Schema.Types.String })
+  // auth_provider!: AuthProviderType;
 }
 
 export type UserDocument = HydratedDocument<User>;

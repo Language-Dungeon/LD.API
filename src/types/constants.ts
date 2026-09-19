@@ -27,5 +27,7 @@ export const ROUTES = {
     REFRESH: "refresh",
     ME: "me",
     LOGOUT: "logout",
+    GOOGLE: "google",
+    GOOGLE_CALLBACK: "google/callback",
   },
 } as const;
