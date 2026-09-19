@@ -3,3 +3,5 @@
 - add metadata for swagger
 - request tracking
 - update on login google
+- better permissions
+- Caching

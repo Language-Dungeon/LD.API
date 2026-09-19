@@ -35,9 +35,6 @@ export class User implements IUserAttributes {
 
   @Prop({ required: false, type: Object, default: {} })
   permissions_overrides?: Record<PermissionValue, boolean>;
-
-  // @Prop({ required: true, type: mongoose.Schema.Types.String })
-  // auth_provider!: AuthProviderType;
 }
 
 export type UserDocument = HydratedDocument<User>;
