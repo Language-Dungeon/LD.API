@@ -1,7 +1,7 @@
 - Unit tests
-- Logger implementation
-- oauth2
 - bullmq
 - add metadata for swagger
 - request tracking
-- encrypt/decrypt
+- update on login google
+- better permissions
+- Caching

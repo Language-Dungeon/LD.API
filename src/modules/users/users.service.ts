@@ -1,29 +1,52 @@
-import { Injectable } from "@nestjs/common";
-import { CreateUserDto } from "./dto/create-user.dto";
+import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { InjectModel } from "@nestjs/mongoose";
 import { User, UserDocument } from "../../schemas/user";
 import { Model } from "mongoose";
 import { CryptoService } from "@modules/crypto";
+import { AuthType } from "../../schemas/authType";
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private readonly user: Model<User>,
+    @InjectModel(AuthType.name) private readonly authType: Model<AuthType>,
     private readonly crypto: CryptoService,
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    return await this.user.create({
-      username: createUserDto.username,
-      email_hmac: this.crypto.encrypt_hmac(createUserDto.email),
-      email: await this.crypto.encrypt(createUserDto.email),
-      password: await this.crypto.hash(createUserDto.password),
-      activated: false,
-    });
+  async create(email: string, username: string, password: string | null): Promise<UserDocument> {
+    const session = await this.user.startSession();
+
+    try {
+      const user = await session.withTransaction(async (s): Promise<UserDocument> => {
+        const createdUser = await this.user.create({
+          username: username,
+          email_hmac: this.crypto.encrypt_hmac(email),
+          email: await this.crypto.encrypt(email),
+          password: password != null ? await this.crypto.hash(password) : null,
+          activated: false,
+        });
+
+        await this.authType.create({
+          email_hmac: createdUser.email_hmac,
+          user_id: createdUser.id,
+          auth_provider: password != null ? "local" : "google",
+        });
+
+        await s.commitTransaction();
+        return createdUser;
+      });
+
+      await session.endSession();
+      return user;
+    } catch (e) {
+      throw new InternalServerErrorException(e);
+    } finally {
+      session.endSession();
+    }
   }
 
-  async findAll(): Promise<User[]> {
+  async findAll(): Promise<UserDocument[]> {
     return await this.user.find();
   }
 
@@ -36,11 +59,11 @@ export class UsersService {
     return await this.user.findOne({ email_hmac: hmacEmail });
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<User | null> {
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserDocument | null> {
     return await this.user.findByIdAndUpdate(id, updateUserDto);
   }
 
-  async remove(id: string): Promise<User | null> {
+  async remove(id: string): Promise<UserDocument | null> {
     return await this.user.findOneAndDelete({ _id: id });
   }
 }

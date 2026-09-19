@@ -51,6 +51,7 @@ export class PermissionsGuard implements CanActivate {
       if (!user.permissions_overrides) return true;
       if (user.permissions_overrides[perm] === false || user.permissions_overrides[perm] === undefined)
         throw new UnauthorizedException();
+      else return true;
     });
 
     if (!hasAllPermissions && hasOverridePermissions) throw new UnauthorizedException();

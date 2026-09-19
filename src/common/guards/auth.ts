@@ -38,7 +38,6 @@ export class JwtAuthGuard implements CanActivate {
     ]);
 
     if (isPublic) return true;
-
     if (!skipRefreshRoute) {
       const access = extractAccesToken(req);
       await this.verifyAccess(access, req);
@@ -46,15 +45,14 @@ export class JwtAuthGuard implements CanActivate {
 
     const refresh = extractRefreshToken(req);
     await this.verifyRefresh(refresh, req);
-
     return true;
   }
 
   private async verifyAccess(token: string, req: Request): Promise<boolean> {
     const user = await this.jwt.verifyAsync<JwtPayload>(token, {
       secret: this.config.getOrThrow("JWT_SECRET"),
-      issuer: "backend:revenger",
-      audience: "backend:revenger",
+      issuer: "LD.API",
+      audience: "LD.API",
     });
 
     const payload = await this.cache.get<ITokenRotationCachePayload>(`${BLACKLIST_KEY}:${user.sub}`);
@@ -67,8 +65,8 @@ export class JwtAuthGuard implements CanActivate {
   private async verifyRefresh(token: string, req: Request): Promise<boolean> {
     const session = await this.jwt.verifyAsync<JwtRefreshPayload>(token, {
       secret: this.config.getOrThrow("JWT_REFRESH_SECRET"),
-      issuer: "backend:revenger",
-      audience: "backend:revenger",
+      issuer: "LD.API",
+      audience: "LD.API",
     });
 
     const payload = await this.cache.get<ITokenRotationCachePayload>(`${FAMILY_KEY}:${session.familyId}`);

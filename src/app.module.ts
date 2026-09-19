@@ -39,6 +39,10 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
         REDIS_URI: Joi.string().required(),
         REDIS_PORT: Joi.number().port().required(),
 
+        GOOGLE_CLIENT_ID: Joi.string().required(),
+        GOOGLE_CLIENT_SECRET: Joi.string().required(),
+        GOOGLE_REDIRECT_URI: Joi.string().uri().required(),
+
         JWT_SECRET: Joi.string().required(),
         JWT_REFRESH_SECRET: Joi.string().required(),
         COOKIE_SECRET: Joi.string().required(),
