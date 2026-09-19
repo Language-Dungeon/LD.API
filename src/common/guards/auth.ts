@@ -38,19 +38,13 @@ export class JwtAuthGuard implements CanActivate {
     ]);
 
     if (isPublic) return true;
-
-    try {
-      if (!skipRefreshRoute) {
-        const access = extractAccesToken(req);
-        await this.verifyAccess(access, req);
-      }
-
-      const refresh = extractRefreshToken(req);
-      await this.verifyRefresh(refresh, req);
-    } catch (e) {
-      console.log(e);
+    if (!skipRefreshRoute) {
+      const access = extractAccesToken(req);
+      await this.verifyAccess(access, req);
     }
 
+    const refresh = extractRefreshToken(req);
+    await this.verifyRefresh(refresh, req);
     return true;
   }
 

@@ -6,7 +6,6 @@ export function extractAccesToken(req: Request) {
   if (!signedCookies) throw new UnauthorizedException();
 
   const access = signedCookies["access_token"];
-  console.log(access, signedCookies);
   if (typeof access === "string") {
     return access;
   }
