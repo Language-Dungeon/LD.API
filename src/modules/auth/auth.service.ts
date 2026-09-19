@@ -86,7 +86,7 @@ export class AuthService {
       throw new InternalServerErrorException("Not found email for this account, please contact support");
 
     const mainEmail = emails[0].value;
-    const user = await this.user.findOneByEmail(mainEmail);
+    const user = await this.user.findOneByEmailAndUpdate(mainEmail, { username: profile.displayName });
 
     if (user) {
       const access = await this.generateAuthJwt({
