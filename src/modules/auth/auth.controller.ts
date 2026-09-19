@@ -37,8 +37,8 @@ export class AuthController {
   @Public()
   @Post(ROUTES.AUTH.REGISTER)
   @HttpCode(201)
-  async signUp(@Body() body: CreateUserDto) {
-    return await this.auth.signup(body);
+  async register(@Body() body: CreateUserDto) {
+    return await this.auth.register(body);
   }
 
   @Public()
@@ -72,7 +72,7 @@ export class AuthController {
       .redirect("http://localhost:3000/auth/me");
   }
 
-  @Get(ROUTES.AUTH.REFRESH)
+  @Post(ROUTES.AUTH.REFRESH)
   @SkipRefreshRoute()
   @HttpCode(200)
   async refresh(@CurrentSession() session: JwtRefreshPayload, @Res({ passthrough: true }) res: Response) {

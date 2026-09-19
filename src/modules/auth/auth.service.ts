@@ -65,7 +65,7 @@ export class AuthService {
     return { access, refresh };
   }
 
-  async signup(body: CreateUserDto) {
+  async register(body: CreateUserDto) {
     const existingUser = await this.user.findOneByEmail(body.email);
     if (existingUser) throw new ConflictException();
 
