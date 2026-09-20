@@ -1,10 +1,10 @@
+import { EXPIRES_IN_10MINS, EXPIRES_IN_7_DAYS, JwtPayload, JwtRefreshPayload, ROUTES } from "@types";
 import { Body, Controller, Get, HttpCode, Post, Req, Res, UseGuards } from "@nestjs/common";
+import { CurrentSession, CurrentUser, GoogleGuard, SkipRefreshRoute } from "@common";
+import { CreateUserDto } from "@modules/users/dto";
+import { UserLoginDTO } from "./dto/login.dto";
 import type { Request, Response } from "express";
 import { AuthService } from "./auth.service";
-import { UserLoginDTO } from "./dto/login";
-import { CurrentSession, CurrentUser, GoogleGuard, SkipRefreshRoute } from "@common";
-import { EXPIRES_IN_10MINS, EXPIRES_IN_7_DAYS, JwtPayload, JwtRefreshPayload, ROUTES } from "@types";
-import { CreateUserDto } from "@modules/users/dto/create-user.dto";
 import { Public } from "@common";
 
 @Controller(ROUTES.AUTH.BASE)

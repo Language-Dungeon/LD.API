@@ -7,10 +7,10 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
-import { UserLoginDTO } from "./dto/login";
+import { UserLoginDTO } from "./dto/login.dto";
 import { Cache } from "@nestjs/cache-manager";
 import { plainToInstance } from "class-transformer";
-import { UserDTO } from "@modules/users/dto/user.dto";
+import { UserDTO, CreateUserDto } from "@modules/users/dto";
 import { CryptoService } from "@modules/crypto";
 import { UsersService } from "@modules/users";
 import type { Request } from "express";
@@ -27,7 +27,6 @@ import {
   JwtRefreshPayload,
   JwtRefreshRawPayload,
 } from "@types";
-import { CreateUserDto } from "@modules/users/dto/create-user.dto";
 import { Profile } from "passport-google-oauth20";
 
 @Injectable()

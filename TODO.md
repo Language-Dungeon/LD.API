@@ -5,3 +5,5 @@
 - update on login google
 - better permissions
 - Caching
+- seprate modules in app.module
+- fix imports

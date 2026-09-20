@@ -12,6 +12,8 @@ import KeyvRedis from "@keyv/redis";
 import { JwtModule } from "@nestjs/jwt";
 import { APP_GUARD } from "@nestjs/core";
 import { JwtAuthGuard } from "@common";
+import { BullModule } from "@nestjs/bullmq";
+import { EventEmitterModule } from "@nestjs/event-emitter";
 
 const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : ".env";
 
@@ -102,6 +104,30 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
 
     JwtModule.register({
       global: true,
+    }),
+
+    BullModule.forRootAsync({
+      imports: [LoggerModule.register("Queue")],
+      inject: [ConfigService, LoggerService],
+      useFactory: async (config: ConfigService<Config>, logger: LoggerService) => {
+        const host = config.getOrThrow("REDIS_URI");
+        const port = config.getOrThrow("REDIS_PORT");
+
+        logger.log(`Connecting BullMQ to Redis at ${host}:${port}`);
+
+        return {
+          connection: {
+            host,
+            port,
+          },
+          prefix: "bullmq",
+        };
+      },
+    }),
+
+    EventEmitterModule.forRoot({
+      global: true,
+      delimiter: ".",
     }),
 
     AuthModule,
