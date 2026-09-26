@@ -1,10 +1,11 @@
-import { CryptoService, LoggerService } from "@modules";
+import { LoggerService } from "@modules/logger";
+import { CryptoService } from "@modules/crypto";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { AuthType, User, UserDocument } from "@schemas";
-import { SendRegisterEmailEvent } from "./events";
+import { SendOTPEmailEvent } from "./events";
 import { UpdateUserDto } from "./dto";
 
 @Injectable()
@@ -38,7 +39,8 @@ export class UsersService {
     });
 
     await session.endSession();
-    this.emiiter.emit(SendRegisterEmailEvent.name, new SendRegisterEmailEvent({ email }));
+
+    this.emiiter.emit(SendOTPEmailEvent.name, new SendOTPEmailEvent({ email }));
     return user;
   }
 

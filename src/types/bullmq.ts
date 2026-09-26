@@ -1,11 +1,16 @@
-export const QUEUE_NAMES = {
-  SEND_EMAIL: "user.send-otp",
-  FORGOT_PASSWORD: "user.forgot-password",
+export const QUEUES_NAMES = {
+  EMAIL: "email",
+};
+
+export const QUEUES_EVENTS = {
+  SEND_OTP: "email.send-otp",
+  NOTIFCATION: "email.send-notifcation",
+  FORGOT_PASSWORD: "email.forgot-password",
 } as const;
 
 export interface IQueueEvents {
-  SEND_EMAIL: { name: typeof QUEUE_NAMES.SEND_EMAIL; payload: { email: string } };
-  FORGOT_PASSWORD: { name: typeof QUEUE_NAMES.FORGOT_PASSWORD; payload: { email: string } };
+  SEND_OTP: { name: typeof QUEUES_EVENTS.SEND_OTP; payload: { email: string } };
+  FORGOT_PASSWORD: { name: typeof QUEUES_EVENTS.FORGOT_PASSWORD; payload: { email: string; message: string } };
 }
 export type QueueNames = keyof IQueueEvents;
 export type QueueName<T extends QueueNames> = IQueueEvents[T]["name"];

@@ -1,5 +1,13 @@
 import { Module, type MiddlewareConsumer, type NestModule } from "@nestjs/common";
-import { LoggerModule, LoggerService, AppService, AppController, AuthModule, CryptoModule } from "@modules";
+import {
+  LoggerModule,
+  LoggerService,
+  AppService,
+  AppController,
+  AuthModule,
+  CryptoModule,
+  UsersModule,
+} from "@modules";
 import { MongooseModule } from "@nestjs/mongoose";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { join } from "path";
@@ -86,7 +94,9 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
       imports: [LoggerModule.register("Cache")],
       inject: [ConfigService, LoggerService],
       useFactory: async (config: ConfigService<Config>, logger: LoggerService) => {
-        const store = new KeyvRedis(config.getOrThrow("REDIS_URI", { infer: true }), {
+        const host = config.getOrThrow("REDIS_URI", { infer: true });
+        const port = config.getOrThrow("REDIS_PORT", { infer: true });
+        const store = new KeyvRedis(`${host}:${port}`, {
           throwOnConnectError: true,
           throwOnErrors: true,
         });
@@ -110,7 +120,8 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
       imports: [LoggerModule.register("Queue")],
       inject: [ConfigService, LoggerService],
       useFactory: async (config: ConfigService<Config>, logger: LoggerService) => {
-        const host = config.getOrThrow("REDIS_URI");
+        const uri = config.getOrThrow("REDIS_URI");
+        const host = new URL(uri).hostname;
         const port = config.getOrThrow("REDIS_PORT");
 
         logger.log(`Connecting BullMQ to Redis at ${host}:${port}`);
@@ -130,8 +141,9 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
       delimiter: ".",
     }),
 
-    AuthModule,
     CryptoModule,
+    AuthModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [

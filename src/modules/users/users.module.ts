@@ -6,19 +6,21 @@ import { User, UserSchema } from "../../schemas/user";
 import { AuthType, AuthTypeSchema } from "../../schemas/auth-type";
 import { LoggerModule } from "@modules/logger";
 import { BullModule } from "@nestjs/bullmq";
-import { QUEUE_NAMES } from "@types";
+import { QUEUES_NAMES } from "@types";
+import { UsersListener } from "./listeners/users.listeners";
+import { UsersEmailProcessor } from "./producers/users.email.producer";
 
 @Module({
   imports: [
     LoggerModule.register("Users"),
-    BullModule.registerQueue({ name: QUEUE_NAMES.SEND_EMAIL }),
+    BullModule.registerQueue({ name: QUEUES_NAMES.EMAIL }),
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: AuthType.name, schema: AuthTypeSchema },
     ]),
   ],
   controllers: [UsersController],
-  providers: [UsersService],
+  providers: [UsersService, UsersListener, UsersEmailProcessor],
   exports: [UsersService],
 })
 export class UsersModule {}
