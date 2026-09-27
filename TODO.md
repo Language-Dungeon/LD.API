@@ -1,5 +1,4 @@
 - Unit tests
-- bullmq
 - add metadata for swagger
 - request tracking
 - update on login google
