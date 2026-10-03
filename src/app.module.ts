@@ -1,5 +1,13 @@
 import { Module, type MiddlewareConsumer, type NestModule } from "@nestjs/common";
-import { LoggerModule, LoggerService, AppService, AppController, AuthModule, CryptoModule } from "@modules";
+import {
+  LoggerModule,
+  LoggerService,
+  AppService,
+  AppController,
+  AuthModule,
+  CryptoModule,
+  UsersModule,
+} from "@modules";
 import { MongooseModule } from "@nestjs/mongoose";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { join } from "path";
@@ -12,6 +20,8 @@ import KeyvRedis from "@keyv/redis";
 import { JwtModule } from "@nestjs/jwt";
 import { APP_GUARD } from "@nestjs/core";
 import { JwtAuthGuard } from "@common";
+import { BullModule } from "@nestjs/bullmq";
+import { EventEmitterModule } from "@nestjs/event-emitter";
 
 const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : ".env";
 
@@ -84,7 +94,9 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
       imports: [LoggerModule.register("Cache")],
       inject: [ConfigService, LoggerService],
       useFactory: async (config: ConfigService<Config>, logger: LoggerService) => {
-        const store = new KeyvRedis(config.getOrThrow("REDIS_URI", { infer: true }), {
+        const host = config.getOrThrow("REDIS_URI", { infer: true });
+        const port = config.getOrThrow("REDIS_PORT", { infer: true });
+        const store = new KeyvRedis(`${host}:${port}`, {
           throwOnConnectError: true,
           throwOnErrors: true,
         });
@@ -104,8 +116,34 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
       global: true,
     }),
 
-    AuthModule,
+    BullModule.forRootAsync({
+      imports: [LoggerModule.register("Queue")],
+      inject: [ConfigService, LoggerService],
+      useFactory: async (config: ConfigService<Config>, logger: LoggerService) => {
+        const uri = config.getOrThrow("REDIS_URI");
+        const host = new URL(uri).hostname;
+        const port = config.getOrThrow("REDIS_PORT");
+
+        logger.log(`Connecting BullMQ to Redis at ${host}:${port}`);
+
+        return {
+          connection: {
+            host,
+            port,
+          },
+          prefix: "bullmq",
+        };
+      },
+    }),
+
+    EventEmitterModule.forRoot({
+      global: true,
+      delimiter: ".",
+    }),
+
     CryptoModule,
+    AuthModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [

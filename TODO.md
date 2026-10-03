@@ -1,7 +1,8 @@
 - Unit tests
-- bullmq
 - add metadata for swagger
 - request tracking
 - update on login google
 - better permissions
 - Caching
+- seprate modules in app.module
+- fix imports

@@ -1,0 +1,44 @@
+services:
+  redis:
+    hostname: redis
+    image: "redis:alpine"
+    environment:
+      - TZ=Europe/Warsaw
+    expose:
+      - ${REDIS_PORT}
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 1s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - ./init/redis.conf:/usr/local/etc/redis/redis.conf
+      - cache:/data
+    restart: always
+  LD-API:
+    depends_on:
+      redis:
+        condition: service_healthy
+    build: .
+    image: ld.api:latest
+    environment:
+      - TZ=Europe/Warsaw
+    env_file: .env.prod
+    deploy:
+      replicas: 1
+    ports:
+      - "${PORT_MAIN}:${PORT_MAIN}/tcp"
+    volumes:
+      - api-data:/usr/src/app/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -S --spider http://0.0.0.0:$PORT_MAIN || exit 1"]
+      interval: 5s
+      timeout: 20s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  cache:
+    driver: local
+  api-data:
+    driver: local

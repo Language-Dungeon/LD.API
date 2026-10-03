@@ -1,11 +1,12 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
-import { UpdateUserDto } from "./dto/update-user.dto";
-import { InjectModel } from "@nestjs/mongoose";
-import { User, UserDocument } from "../../schemas/user";
-import { Model } from "mongoose";
-import { CryptoService } from "@modules/crypto";
-import { AuthType } from "../../schemas/authType";
 import { LoggerService } from "@modules/logger";
+import { CryptoService } from "@modules/crypto";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { Injectable } from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
+import { AuthType, User, UserDocument } from "@schemas";
+import { SendOTPEmailEvent } from "./events";
+import { UpdateUserDto } from "./dto";
 
 @Injectable()
 export class UsersService {
@@ -13,39 +14,34 @@ export class UsersService {
     @InjectModel(User.name) private readonly user: Model<User>,
     @InjectModel(AuthType.name) private readonly authType: Model<AuthType>,
     private readonly crypto: CryptoService,
-    private readonly logger: LoggerService,
+    private readonly _logger: LoggerService,
+    private readonly emiiter: EventEmitter2,
   ) {}
 
   async create(email: string, username: string, password: string | null): Promise<UserDocument> {
     const session = await this.user.startSession();
-    try {
-      const user = await session.withTransaction(async (s): Promise<UserDocument> => {
-        const createdUser = await this.user.create({
-          username: username,
-          email_hmac: this.crypto.encrypt_hmac(email),
-          email: await this.crypto.encrypt(email),
-          password: password != null ? await this.crypto.hash(password) : null,
-          activated: false,
-        });
-
-        await this.authType.create({
-          email_hmac: createdUser.email_hmac,
-          user_id: createdUser.id,
-          auth_provider: password != null ? "local" : "google",
-        });
-
-        await s.commitTransaction();
-        return createdUser;
+    const user = await session.withTransaction(async (s): Promise<UserDocument> => {
+      const createdUser = await this.user.create({
+        username: username,
+        email_hmac: this.crypto.encrypt_hmac(email),
+        email: await this.crypto.encrypt(email),
+        password: password != null ? await this.crypto.hash(password) : null,
+        activated: false,
+      });
+      await this.authType.create({
+        email_hmac: createdUser.email_hmac,
+        user_id: createdUser.id,
+        auth_provider: password != null ? "local" : "google",
       });
 
-      await session.endSession();
-      return user;
-    } catch (e) {
-      this.logger.error(e);
-      throw new InternalServerErrorException();
-    } finally {
-      session.endSession();
-    }
+      await s.commitTransaction();
+      return createdUser;
+    });
+
+    await session.endSession();
+
+    this.emiiter.emit(SendOTPEmailEvent.name, new SendOTPEmailEvent({ email }));
+    return user;
   }
 
   async findAll(): Promise<UserDocument[]> {

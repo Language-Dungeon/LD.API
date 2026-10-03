@@ -1,6 +1,6 @@
-# orp-backend
+# Language Dangeon API
 
-## Run with bun
+## Run with npm
 
 To install dependencies:
 
@@ -8,7 +8,7 @@ To install dependencies:
 npm install
 ```
 
-To run:
+To run local:
 
 ```bash
 npm run start:dev
@@ -19,11 +19,17 @@ npm run start:dev
 build image
 
 ```bash
-docker build -t bun:LD.API .
+docker build -t ld.api .
 ```
 
 run with port forwarding & env file
 
 ```bash
 docker run -d -p 3000:3000 --env-file <ENV_FILENAME>  bun:LD.API
+```
+
+run with port forwarding & docker compose (use .env.prod filename)
+
+```bash
+docker compose up --build -d
 ```

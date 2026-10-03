@@ -2,6 +2,7 @@
 
 # project files
 .env
+.env.prod
 .env.development
 .env.production
 .env.development.local
