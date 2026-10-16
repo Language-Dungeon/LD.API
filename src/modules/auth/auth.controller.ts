@@ -6,6 +6,7 @@ import { UserLoginDTO } from "./dto/login.dto";
 import type { Request, Response } from "express";
 import { AuthService } from "./auth.service";
 import { Public } from "@common";
+import { ForgotPasswordDTO } from "./dto/forgot-password.dto";
 
 @Controller(ROUTES.AUTH.BASE)
 export class AuthController {
@@ -109,5 +110,12 @@ export class AuthController {
   async logout(@CurrentUser() user: JwtPayload, @CurrentSession() session: JwtRefreshPayload, @Res() res: Response) {
     await this.auth.logout(user, session);
     return res.status(200).send();
+  }
+
+  @Public()
+  @Post(ROUTES.AUTH.FORGOT_PASSWORD)
+  @HttpCode(200)
+  async forgotPassword(@Body() body: ForgotPasswordDTO) {
+    await this.auth.forgot(body);
   }
 }

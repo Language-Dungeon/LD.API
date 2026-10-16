@@ -18,6 +18,8 @@ export interface Config {
   GOOGLE_CLIENT_SECRET: string;
   GOOGLE_REDIRECT_URI: string;
 
+  RESEND_API_KEY: string;
+
   JWT_SECRET: string;
   JWT_REFRESH_SECRET: string;
   COOKIE_SECRET: string;

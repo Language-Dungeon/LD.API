@@ -53,6 +53,8 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
         GOOGLE_CLIENT_SECRET: Joi.string().required(),
         GOOGLE_REDIRECT_URI: Joi.string().uri().required(),
 
+        RESEND_API_KEY: Joi.string().required(),
+
         JWT_SECRET: Joi.string().required(),
         JWT_REFRESH_SECRET: Joi.string().required(),
         COOKIE_SECRET: Joi.string().required(),

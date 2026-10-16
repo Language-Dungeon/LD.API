@@ -28,6 +28,9 @@ import {
   JwtRefreshRawPayload,
 } from "@types";
 import { Profile } from "passport-google-oauth20";
+import { ForgotPasswordDTO } from "./dto/forgot-password.dto";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { ForgotPasswordEvent } from "@modules/users/events";
 
 @Injectable()
 export class AuthService {
@@ -37,6 +40,7 @@ export class AuthService {
     private readonly cache: Cache,
     private readonly crypto: CryptoService,
     private readonly user: UsersService,
+    private readonly emitter: EventEmitter2,
   ) {}
 
   //TODO: Add finding by username
@@ -223,6 +227,12 @@ export class AuthService {
       EXPIRES_IN_7_DAYS * 1000,
     );
     return token;
+  }
+
+  async forgot(body: ForgotPasswordDTO): Promise<void> {
+    const otp = this.crypto.generate_otp();
+
+    this.emitter.emit(ForgotPasswordEvent.name, new ForgotPasswordEvent({ email: body.email, message: "test" }));
   }
 
   async userExists(email: string): Promise<boolean> {

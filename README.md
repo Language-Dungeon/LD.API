@@ -32,4 +32,5 @@ run with port forwarding & docker compose (use .env.prod filename)
 
 ```bash
 docker compose up --build -d
+
 ```

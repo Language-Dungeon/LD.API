@@ -27,6 +27,7 @@ export const ROUTES = {
     REFRESH: "refresh",
     ME: "me",
     LOGOUT: "logout",
+    FORGOT_PASSWORD: "forgot-password",
     GOOGLE: "google",
     GOOGLE_CALLBACK: "google/callback",
   },
