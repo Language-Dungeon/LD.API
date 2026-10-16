@@ -141,6 +141,7 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
     EventEmitterModule.forRoot({
       global: true,
       delimiter: ".",
+      verboseMemoryLeak: true,
     }),
 
     CryptoModule,

@@ -3,3 +3,4 @@ export * from "./main";
 export * from "./auth";
 export * from "./crypto";
 export * from "./users";
+export * from "./mailer";

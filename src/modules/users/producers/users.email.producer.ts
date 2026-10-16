@@ -1,13 +1,20 @@
+import { CryptoService } from "@modules/crypto";
 import { LoggerService } from "@modules/logger";
+import { MailerService, OTPEmail } from "@modules/mailer";
 import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { Injectable } from "@nestjs/common";
 import { QueueEventsType, QUEUES_EVENTS, QUEUES_NAMES } from "@types";
 import { Job } from "bullmq";
+import { jsx } from "react/jsx-runtime";
 
 @Injectable()
 @Processor(QUEUES_NAMES.EMAIL)
 export class UsersEmailProcessor extends WorkerHost {
-  constructor(private readonly logger: LoggerService) {
+  constructor(
+    private readonly logger: LoggerService,
+    private readonly mailer: MailerService,
+    private readonly crypto: CryptoService,
+  ) {
     super();
   }
 
@@ -16,7 +23,12 @@ export class UsersEmailProcessor extends WorkerHost {
 
     switch (event.name) {
       case QUEUES_EVENTS.SEND_OTP: {
-        this.logger.log("send otp");
+        await this.mailer.emails.send({
+          from: `Resend <onboarding@resend.dev>`,
+          to: event.payload.email,
+          subject: "Language Dangeon account activation code",
+          react: jsx(OTPEmail, { otp: this.crypto.generate_otp() }),
+        });
         break;
       }
       case QUEUES_EVENTS.NOTIFCATION: {
