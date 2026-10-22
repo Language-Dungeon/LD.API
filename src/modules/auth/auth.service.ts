@@ -231,6 +231,16 @@ export class AuthService {
     return token;
   }
 
+  /**
+   * @author przdev7
+   *
+   *
+   * @description
+   * Metoda służy do weryfikowania emailu użytkownika,
+   * po zalogowaniu lub po wywołaniu metody regenerateOtp()
+   * na podany email jest wysyłany kod, który jest weryfikowany w tej funkcji.
+   * Kod OTP jest ważny 10min od wygenerowania.
+   */
   async applyOTP(user: JwtPayload, otp: string): Promise<boolean> {
     const payload = await this.cache.get<IUserOTPCachePayload>(`${OTP_KEY}:${user.email}`);
     if (!payload || payload.otp != otp || user.activated) throw new BadRequestException();

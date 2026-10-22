@@ -4,6 +4,7 @@ export const APP_NAME = "LD.API";
 export const IS_PUBLIC_PROVIDER = "Public";
 export const REQUIRED_PERMISSIONS = "requiredPermissions";
 export const SKIP_REFRESH_ROUTE = "skipRefreshRoute";
+export const SKIP_ACCOUNT_ACTIVATED = "skipAccountActivated";
 export const USER_PROVIDER = "UserRepository";
 
 /* redis keys */

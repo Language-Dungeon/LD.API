@@ -1,6 +1,6 @@
 import { EXPIRES_IN_10MINS, EXPIRES_IN_7_DAYS, JwtPayload, JwtRefreshPayload, ROUTES } from "@types";
 import { Body, Controller, Get, HttpCode, Post, Req, Res, UseGuards } from "@nestjs/common";
-import { CurrentSession, CurrentUser, GoogleGuard, SkipRefreshRoute } from "@common";
+import { CurrentSession, CurrentUser, GoogleGuard, SkipAccountActivated, SkipRefreshRoute } from "@common";
 import { CreateUserDto } from "@modules/users/dto";
 import { UserLoginDTO } from "./dto/login.dto";
 import type { Request, Response } from "express";
@@ -76,6 +76,7 @@ export class AuthController {
 
   @Post(ROUTES.AUTH.REFRESH)
   @SkipRefreshRoute()
+  @SkipAccountActivated()
   @HttpCode(200)
   async refresh(@CurrentSession() session: JwtRefreshPayload, @Res({ passthrough: true }) res: Response) {
     const { access, refresh } = await this.auth.refresh(session);
@@ -114,6 +115,7 @@ export class AuthController {
   }
 
   @Post(ROUTES.AUTH.APPLY_OTP)
+  @SkipAccountActivated()
   @HttpCode(200)
   async applyOTP(@CurrentUser() user: JwtPayload, @Body() body: ApplyOTP_DTO) {
     await this.auth.applyOTP(user, body.otp);
