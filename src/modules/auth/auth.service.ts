@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   InternalServerErrorException,
@@ -23,14 +24,14 @@ import {
   EXPIRES_IN_7_DAYS,
   FAMILY_KEY,
   ITokenRotationCachePayload,
+  IUserOTPCachePayload,
   JwtPayload,
   JwtRefreshPayload,
   JwtRefreshRawPayload,
+  OTP_KEY,
 } from "@types";
 import { Profile } from "passport-google-oauth20";
-import { ForgotPasswordDTO } from "./dto/forgot-password.dto";
 import { EventEmitter2 } from "@nestjs/event-emitter";
-import { ForgotPasswordEvent } from "@modules/users/events";
 
 @Injectable()
 export class AuthService {
@@ -50,10 +51,11 @@ export class AuthService {
 
     if (!user.password) throw new UnauthorizedException("please use google login");
     if (!(await this.crypto.verifyHash(user.password, body.password))) throw new UnauthorizedException();
+    const decryptedEmail = await this.crypto.decrypt(user.email);
 
     const access = await this.generateAuthJwt({
       sub: user.id,
-      email: user.email,
+      email: decryptedEmail,
       username: user.username,
       activated: user.activated,
       role: user.role,
@@ -229,10 +231,14 @@ export class AuthService {
     return token;
   }
 
-  async forgot(body: ForgotPasswordDTO): Promise<void> {
-    const otp = this.crypto.generate_otp();
+  async applyOTP(user: JwtPayload, otp: string): Promise<boolean> {
+    const payload = await this.cache.get<IUserOTPCachePayload>(`${OTP_KEY}:${user.email}`);
+    if (!payload || payload.otp != otp || user.activated) throw new BadRequestException();
 
-    this.emitter.emit(ForgotPasswordEvent.name, new ForgotPasswordEvent({ email: body.email, message: "test" }));
+    await this.cache.del(`${OTP_KEY}:${user.email}`);
+    await this.user.update(user.sub, { activated: true });
+
+    return true;
   }
 
   async userExists(email: string): Promise<boolean> {

@@ -21,8 +21,3 @@ export type JwtRefreshPayload = Required<StrictJwtPayload> & {
 export type JwtRefreshRawPayload = Pick<JwtRawPayload, "sub"> & {
   familyId: string;
 };
-
-export interface ITokenRotationCachePayload {
-  jti: string;
-  revoked: boolean;
-}

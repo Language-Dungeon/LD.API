@@ -7,6 +7,7 @@ import type { Request, Response } from "express";
 import { AuthService } from "./auth.service";
 import { Public } from "@common";
 import { ForgotPasswordDTO } from "./dto/forgot-password.dto";
+import { ApplyOTP_DTO } from "./dto/apply-otp.dto";
 
 @Controller(ROUTES.AUTH.BASE)
 export class AuthController {
@@ -112,10 +113,16 @@ export class AuthController {
     return res.status(200).send();
   }
 
+  @Post(ROUTES.AUTH.APPLY_OTP)
+  @HttpCode(200)
+  async applyOTP(@CurrentUser() user: JwtPayload, @Body() body: ApplyOTP_DTO) {
+    await this.auth.applyOTP(user, body.otp);
+  }
+
   @Public()
   @Post(ROUTES.AUTH.FORGOT_PASSWORD)
   @HttpCode(200)
-  async forgotPassword(@Body() body: ForgotPasswordDTO) {
-    await this.auth.forgot(body);
+  async forgotPassword(@Body() _body: ForgotPasswordDTO) {
+    // await this.auth.forgot(body);
   }
 }

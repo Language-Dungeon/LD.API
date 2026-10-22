@@ -2,11 +2,12 @@ import { InjectQueue } from "@nestjs/bullmq";
 import { Injectable } from "@nestjs/common";
 import { OnEvent } from "@nestjs/event-emitter";
 import { QUEUES_NAMES } from "@types";
-import { Queue } from "bullmq";
+import { JobsOptions, Queue } from "bullmq";
 import { ForgotPasswordEvent, SendOTPEmailEvent } from "../events";
 
-const JOB_OPTIONS = {
-  attemps: 3,
+const JOB_OPTIONS: JobsOptions = {
+  attempts: 3,
+  removeOnComplete: true,
   backoff: {
     type: "exponential" as const,
     delay: 1000,

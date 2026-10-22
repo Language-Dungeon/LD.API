@@ -107,7 +107,7 @@ export class CryptoService {
     const digits = ["0", "1", "3", "4", "5", "6"];
     let otp = "";
 
-    for (let i = 0; i <= 6; i++) {
+    for (let i = 0; i < 6; i++) {
       otp += digits[randomInt(digits.length)];
     }
 
