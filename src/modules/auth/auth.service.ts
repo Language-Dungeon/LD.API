@@ -31,6 +31,8 @@ import {
   OTP_KEY,
 } from "@types";
 import { Profile } from "passport-google-oauth20";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { SendOTPEmailEvent } from "@modules/users/events";
 
 @Injectable()
 export class AuthService {
@@ -40,6 +42,7 @@ export class AuthService {
     private readonly cache: Cache,
     private readonly crypto: CryptoService,
     private readonly user: UsersService,
+    private readonly emitter: EventEmitter2,
   ) {}
 
   //TODO: Add finding by username
@@ -234,16 +237,15 @@ export class AuthService {
    *
    *
    * @description
+   * Metoda sprawdza czy email user'a juz nie jest zweryfikowany
+   * jezeli nie jest, emituje event SendOTPEmailEvent
    *
-   * TODO: add ratelimiting
+   * @todo
+   * add ratelimiting
    */
-  async generateOTP(user: JwtPayload): Promise<string> {
+  async generateOTP(user: JwtPayload): Promise<void> {
     if (user.activated) throw new BadRequestException();
-
-    const otp = this.crypto.generate_otp();
-    await this.cache.set<IUserOTPCachePayload>(`${OTP_KEY}:${user.email}`, { otp }, EXPIRES_IN_10MINS * 1000);
-
-    return otp;
+    await this.emitter.emit(SendOTPEmailEvent.name, new SendOTPEmailEvent({ email: user.email }));
   }
 
   /**

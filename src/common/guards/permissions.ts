@@ -12,7 +12,6 @@ import {
 } from "@types";
 import type { Request } from "express";
 
-//TODO: implement permission_overrides
 @Injectable()
 export class PermissionsGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
