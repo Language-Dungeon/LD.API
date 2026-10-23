@@ -114,6 +114,13 @@ export class AuthController {
     return res.status(200).send();
   }
 
+  @Post(ROUTES.AUTH.GENERATE_OTP)
+  @HttpCode(200)
+  @SkipAccountActivated()
+  async generateOTP(@CurrentUser() user: JwtPayload) {
+    return await this.auth.generateOTP(user);
+  }
+
   @Post(ROUTES.AUTH.APPLY_OTP)
   @SkipAccountActivated()
   @HttpCode(200)

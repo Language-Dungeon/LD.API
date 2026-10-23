@@ -31,6 +31,7 @@ export const ROUTES = {
     LOGOUT: "logout",
     FORGOT_PASSWORD: "forgot-password",
     APPLY_OTP: "apply-otp",
+    GENERATE_OTP: "generate-otp",
     GOOGLE: "google",
     GOOGLE_CALLBACK: "google/callback",
   },

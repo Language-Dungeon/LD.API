@@ -31,7 +31,6 @@ import {
   OTP_KEY,
 } from "@types";
 import { Profile } from "passport-google-oauth20";
-import { EventEmitter2 } from "@nestjs/event-emitter";
 
 @Injectable()
 export class AuthService {
@@ -41,7 +40,6 @@ export class AuthService {
     private readonly cache: Cache,
     private readonly crypto: CryptoService,
     private readonly user: UsersService,
-    private readonly emitter: EventEmitter2,
   ) {}
 
   //TODO: Add finding by username
@@ -229,6 +227,23 @@ export class AuthService {
       EXPIRES_IN_7_DAYS * 1000,
     );
     return token;
+  }
+
+  /**
+   * @author przdev7
+   *
+   *
+   * @description
+   *
+   * TODO: add ratelimiting
+   */
+  async generateOTP(user: JwtPayload): Promise<string> {
+    if (user.activated) throw new BadRequestException();
+
+    const otp = this.crypto.generate_otp();
+    await this.cache.set<IUserOTPCachePayload>(`${OTP_KEY}:${user.email}`, { otp }, EXPIRES_IN_10MINS * 1000);
+
+    return otp;
   }
 
   /**
