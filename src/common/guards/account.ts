@@ -20,7 +20,7 @@ export class AccountGuard implements CanActivate {
 
     if (isPublic || skipAccountActivated) return true;
 
-    if (!req.user) throw new UnauthorizedException("xd");
+    if (!req.user) throw new UnauthorizedException();
     if (req.user.activated === false) throw new ForbiddenException("ACCOUNT_NOT_ACTIVATED");
 
     return true;
