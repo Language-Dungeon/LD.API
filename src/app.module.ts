@@ -13,7 +13,7 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { join } from "path";
 import Joi from "joi";
 import { type Config } from "@types";
-import { GlobalMiddleware, PermissionsGuard } from "@common";
+import { AccountGuard, GlobalMiddleware, PermissionsGuard } from "@common";
 import { Connection } from "mongoose";
 import { CacheModule } from "@nestjs/cache-manager";
 import KeyvRedis from "@keyv/redis";
@@ -52,6 +52,8 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
         GOOGLE_CLIENT_ID: Joi.string().required(),
         GOOGLE_CLIENT_SECRET: Joi.string().required(),
         GOOGLE_REDIRECT_URI: Joi.string().uri().required(),
+
+        RESEND_API_KEY: Joi.string().required(),
 
         JWT_SECRET: Joi.string().required(),
         JWT_REFRESH_SECRET: Joi.string().required(),
@@ -139,6 +141,7 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
     EventEmitterModule.forRoot({
       global: true,
       delimiter: ".",
+      verboseMemoryLeak: true,
     }),
 
     CryptoModule,
@@ -151,6 +154,10 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: AccountGuard,
     },
     {
       provide: APP_GUARD,

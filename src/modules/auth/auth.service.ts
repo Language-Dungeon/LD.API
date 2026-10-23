@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   InternalServerErrorException,
@@ -23,11 +24,15 @@ import {
   EXPIRES_IN_7_DAYS,
   FAMILY_KEY,
   ITokenRotationCachePayload,
+  IUserOTPCachePayload,
   JwtPayload,
   JwtRefreshPayload,
   JwtRefreshRawPayload,
+  OTP_KEY,
 } from "@types";
 import { Profile } from "passport-google-oauth20";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { SendOTPEmailEvent } from "@modules/users/events";
 
 @Injectable()
 export class AuthService {
@@ -37,6 +42,7 @@ export class AuthService {
     private readonly cache: Cache,
     private readonly crypto: CryptoService,
     private readonly user: UsersService,
+    private readonly emitter: EventEmitter2,
   ) {}
 
   //TODO: Add finding by username
@@ -46,10 +52,11 @@ export class AuthService {
 
     if (!user.password) throw new UnauthorizedException("please use google login");
     if (!(await this.crypto.verifyHash(user.password, body.password))) throw new UnauthorizedException();
+    const decryptedEmail = await this.crypto.decrypt(user.email);
 
     const access = await this.generateAuthJwt({
       sub: user.id,
-      email: user.email,
+      email: decryptedEmail,
       username: user.username,
       activated: user.activated,
       role: user.role,
@@ -223,6 +230,42 @@ export class AuthService {
       EXPIRES_IN_7_DAYS * 1000,
     );
     return token;
+  }
+
+  /**
+   * @author przdev7
+   *
+   *
+   * @description
+   * Metoda sprawdza czy email user'a juz nie jest zweryfikowany
+   * jezeli nie jest, emituje event SendOTPEmailEvent
+   *
+   * @todo
+   * add ratelimiting
+   */
+  async generateOTP(user: JwtPayload): Promise<void> {
+    if (user.activated) throw new BadRequestException();
+    await this.emitter.emit(SendOTPEmailEvent.name, new SendOTPEmailEvent({ email: user.email }));
+  }
+
+  /**
+   * @author przdev7
+   *
+   *
+   * @description
+   * Metoda służy do weryfikowania emailu użytkownika,
+   * po zalogowaniu lub po wywołaniu metody regenerateOtp()
+   * na podany email jest wysyłany kod, który jest weryfikowany w tej funkcji.
+   * Kod OTP jest ważny 10min od wygenerowania.
+   */
+  async applyOTP(user: JwtPayload, otp: string): Promise<boolean> {
+    const payload = await this.cache.get<IUserOTPCachePayload>(`${OTP_KEY}:${user.email}`);
+    if (!payload || payload.otp != otp || user.activated) throw new BadRequestException();
+
+    await this.cache.del(`${OTP_KEY}:${user.email}`);
+    await this.user.update(user.sub, { activated: true });
+
+    return true;
   }
 
   async userExists(email: string): Promise<boolean> {

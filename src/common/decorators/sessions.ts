@@ -1,8 +1,5 @@
-import { createParamDecorator, ExecutionContext, SetMetadata, UnauthorizedException } from "@nestjs/common";
-import { SKIP_REFRESH_ROUTE } from "@types";
+import { createParamDecorator, ExecutionContext, UnauthorizedException } from "@nestjs/common";
 import type { Request } from "express";
-
-export const SkipRefreshRoute = () => SetMetadata(SKIP_REFRESH_ROUTE, true);
 
 export const CurrentUser = createParamDecorator((data: unknown, ctx: ExecutionContext) => {
   const req: Request = ctx.switchToHttp().getRequest();

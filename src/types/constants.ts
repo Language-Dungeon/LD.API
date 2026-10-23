@@ -4,12 +4,14 @@ export const APP_NAME = "LD.API";
 export const IS_PUBLIC_PROVIDER = "Public";
 export const REQUIRED_PERMISSIONS = "requiredPermissions";
 export const SKIP_REFRESH_ROUTE = "skipRefreshRoute";
+export const SKIP_ACCOUNT_ACTIVATED = "skipAccountActivated";
 export const USER_PROVIDER = "UserRepository";
 
 /* redis keys */
 export const FAMILY_KEY = "refresh:family";
 export const USER_KEY = "user";
 export const BLACKLIST_KEY = "blacklist";
+export const OTP_KEY = "otp";
 
 /* defined time in seconds */
 export const EXPIRES_IN_7_DAYS = 604800;
@@ -27,6 +29,9 @@ export const ROUTES = {
     REFRESH: "refresh",
     ME: "me",
     LOGOUT: "logout",
+    FORGOT_PASSWORD: "forgot-password",
+    APPLY_OTP: "apply-otp",
+    GENERATE_OTP: "generate-otp",
     GOOGLE: "google",
     GOOGLE_CALLBACK: "google/callback",
   },

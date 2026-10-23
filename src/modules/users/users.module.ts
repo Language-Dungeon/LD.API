@@ -1,17 +1,20 @@
-import { Module } from "@nestjs/common";
-import { UsersService } from "./users.service";
-import { UsersController } from "./users.controller";
-import { MongooseModule } from "@nestjs/mongoose";
-import { User, UserSchema } from "../../schemas/user";
-import { AuthType, AuthTypeSchema } from "../../schemas/auth-type";
-import { LoggerModule } from "@modules/logger";
-import { BullModule } from "@nestjs/bullmq";
-import { QUEUES_NAMES } from "@types";
-import { UsersListener } from "./listeners/users.listeners";
+import { User, UserSchema, AuthType, AuthTypeSchema } from "@schemas";
 import { UsersEmailProcessor } from "./producers/users.email.producer";
+import { UsersListener } from "./listeners/users.listeners";
+import { UsersController } from "./users.controller";
+import { UsersService } from "./users.service";
+import { MongooseModule } from "@nestjs/mongoose";
+import { LoggerModule } from "@modules/logger";
+import { MailerModule } from "@modules/mailer";
+import { BullModule } from "@nestjs/bullmq";
+import { Module } from "@nestjs/common";
+import { QUEUES_NAMES } from "@types";
+import { CryptoModule } from "@modules/crypto";
 
 @Module({
   imports: [
+    MailerModule,
+    CryptoModule,
     LoggerModule.register("Users"),
     BullModule.registerQueue({ name: QUEUES_NAMES.EMAIL }),
     MongooseModule.forFeature([

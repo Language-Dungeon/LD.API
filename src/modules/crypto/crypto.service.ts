@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { type Config } from "@types";
 import * as argon2 from "argon2";
-import { randomBytes, scrypt, createCipheriv, createDecipheriv, createHmac } from "crypto";
+import { randomBytes, scrypt, createCipheriv, createDecipheriv, createHmac, randomInt } from "crypto";
 import { promisify } from "util";
 
 @Injectable()
@@ -101,5 +101,16 @@ export class CryptoService {
   validate_hmac(text: string, expected: string) {
     const computedHmac = this.encrypt_hmac(text);
     return computedHmac === expected;
+  }
+
+  generate_otp() {
+    const digits = ["0", "1", "3", "4", "5", "6"];
+    let otp = "";
+
+    for (let i = 0; i < 6; i++) {
+      otp += digits[randomInt(digits.length)];
+    }
+
+    return otp;
   }
 }
