@@ -32,7 +32,8 @@ import {
 } from "@types";
 import { Profile } from "passport-google-oauth20";
 import { EventEmitter2 } from "@nestjs/event-emitter";
-import { SendOTPEmailEvent } from "@modules/users/events";
+import { ForgotPasswordEvent, SendOTPEmailEvent } from "@modules/users/events";
+import { ApplyForgotPasswordOTP_DTO, ForgotPasswordDTO } from "./dto/forgot-password.dto";
 
 @Injectable()
 export class AuthService {
@@ -265,6 +266,17 @@ export class AuthService {
     await this.cache.del(`${OTP_KEY}:${user.email}`);
     await this.user.update(user.sub, { activated: true });
 
+    return true;
+  }
+
+  async forgotPassword(body: ForgotPasswordDTO) {
+    const user = await this.user.findOneByEmail(body.email);
+    if (!user) return;
+
+    await this.emitter.emit(ForgotPasswordEvent.name, new ForgotPasswordEvent({ email: user.email }));
+  }
+
+  async applyForgotPasswordOTP(body: ApplyForgotPasswordOTP_DTO) {
     return true;
   }
 

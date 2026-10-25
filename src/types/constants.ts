@@ -12,6 +12,7 @@ export const FAMILY_KEY = "refresh:family";
 export const USER_KEY = "user";
 export const BLACKLIST_KEY = "blacklist";
 export const OTP_KEY = "otp";
+export const PASSWORD_OTP_KEY = "password:otp";
 
 /* defined time in seconds */
 export const EXPIRES_IN_7_DAYS = 604800;
@@ -30,8 +31,9 @@ export const ROUTES = {
     ME: "me",
     LOGOUT: "logout",
     FORGOT_PASSWORD: "forgot-password",
-    APPLY_OTP: "apply-otp",
+    FORGOT_PASSWORD_APPLY_OTP: "forgot-password/apply-otp",
     GENERATE_OTP: "generate-otp",
+    APPLY_OTP: "apply-otp",
     GOOGLE: "google",
     GOOGLE_CALLBACK: "google/callback",
   },

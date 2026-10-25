@@ -6,7 +6,7 @@ import { UserLoginDTO } from "./dto/login.dto";
 import type { Request, Response } from "express";
 import { AuthService } from "./auth.service";
 import { Public } from "@common";
-import { ForgotPasswordDTO } from "./dto/forgot-password.dto";
+import { ApplyForgotPasswordOTP_DTO, ForgotPasswordDTO } from "./dto/forgot-password.dto";
 import { ApplyOTP_DTO } from "./dto/apply-otp.dto";
 
 @Controller(ROUTES.AUTH.BASE)
@@ -114,6 +114,20 @@ export class AuthController {
     return res.status(200).send();
   }
 
+  @Public()
+  @Post(ROUTES.AUTH.FORGOT_PASSWORD)
+  @HttpCode(200)
+  async forgotPassword(@Body() body: ForgotPasswordDTO) {
+    await this.auth.forgotPassword(body);
+  }
+
+  @Public()
+  @Post(ROUTES.AUTH.FORGOT_PASSWORD_APPLY_OTP)
+  @HttpCode(200)
+  async applyForgotPasswordOTP(@Body() body: ApplyForgotPasswordOTP_DTO) {
+    return await this.auth.applyForgotPasswordOTP(body);
+  }
+
   @Post(ROUTES.AUTH.GENERATE_OTP)
   @HttpCode(200)
   @SkipAccountActivated()
@@ -126,12 +140,5 @@ export class AuthController {
   @HttpCode(200)
   async applyOTP(@CurrentUser() user: JwtPayload, @Body() body: ApplyOTP_DTO) {
     await this.auth.applyOTP(user, body.otp);
-  }
-
-  @Public()
-  @Post(ROUTES.AUTH.FORGOT_PASSWORD)
-  @HttpCode(200)
-  async forgotPassword(@Body() _body: ForgotPasswordDTO) {
-    // await this.auth.forgot(body);
   }
 }
