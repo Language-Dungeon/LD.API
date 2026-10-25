@@ -39,48 +39,52 @@ export class UsersEmailProcessor extends WorkerHost {
   async process(job: Job<QueueEventsType["payload"], QueueEventsType["name"]>): Promise<void> {
     const event = { name: job.name, payload: job.data } as QueueEventsType;
 
-    switch (event.name) {
-      case QUEUES_EVENTS.SEND_OTP: {
-        const otp = this.crypto.generate_otp();
+    try {
+      switch (event.name) {
+        case QUEUES_EVENTS.SEND_OTP: {
+          const otp = this.crypto.generate_otp();
 
-        await this.mailer.emails.send({
-          from: `Resend <onboarding@resend.dev>`,
-          to: event.payload.email,
-          subject: "Language Dangeon account activation code",
-          react: jsx(OTPEmail, { otp }),
-        });
-        await this.cache.set<IUserOTPCachePayload>(
-          `${OTP_KEY}:${event.payload.email}`,
-          { otp },
-          EXPIRES_IN_10MINS * 1000,
-        );
+          await this.mailer.emails.send({
+            from: `Resend <onboarding@resend.dev>`,
+            to: event.payload.email,
+            subject: "Language Dangeon account activation code",
+            react: jsx(OTPEmail, { otp }),
+          });
+          await this.cache.set<IUserOTPCachePayload>(
+            `${OTP_KEY}:${event.payload.email}`,
+            { otp },
+            EXPIRES_IN_10MINS * 1000,
+          );
 
-        break;
-      }
-      case QUEUES_EVENTS.NOTIFCATION: {
-        this.logger.log("notification");
-        break;
-      }
-      case QUEUES_EVENTS.FORGOT_PASSWORD: {
-        const otp = this.crypto.generate_otp();
+          break;
+        }
+        case QUEUES_EVENTS.NOTIFCATION: {
+          this.logger.log("notification");
+          break;
+        }
+        case QUEUES_EVENTS.FORGOT_PASSWORD: {
+          const otp = this.crypto.generate_otp();
 
-        await this.mailer.emails.send({
-          from: `Resend <onboarding@resend.dev>`,
-          to: event.payload.email,
-          subject: "Language Dangeon account activation code",
-          react: jsx(OTPEmail, { otp }),
-        });
+          await this.mailer.emails.send({
+            from: `Resend <onboarding@resend.dev>`,
+            to: event.payload.email,
+            subject: "Language Dangeon forgot password code",
+            react: jsx(OTPEmail, { otp }),
+          });
 
-        await this.cache.set<IUserOTPCachePayload>(
-          `${PASSWORD_OTP_KEY}:${event.payload.email}`,
-          { otp },
-          EXPIRES_IN_10MINS * 1000,
-        );
-        break;
+          await this.cache.set<IUserOTPCachePayload>(
+            `${PASSWORD_OTP_KEY}:${event.payload.email}`,
+            { otp },
+            EXPIRES_IN_10MINS * 1000,
+          );
+          break;
+        }
+        default: {
+          this.logger.error(`Unknown job: ${job.name}, ${JSON.stringify(job)}`);
+        }
       }
-      default: {
-        this.logger.error(`Unknown job: ${job.name}, ${JSON.stringify(job)}`);
-      }
+    } catch (e) {
+      this.logger.error(`Unknown error ${e}`);
     }
   }
 }

@@ -118,7 +118,7 @@ export class AuthController {
   @Post(ROUTES.AUTH.FORGOT_PASSWORD)
   @HttpCode(200)
   async forgotPassword(@Body() body: ForgotPasswordDTO) {
-    await this.auth.forgotPassword(body);
+    return await this.auth.forgotPassword(body);
   }
 
   @Public()
@@ -139,6 +139,6 @@ export class AuthController {
   @SkipAccountActivated()
   @HttpCode(200)
   async applyOTP(@CurrentUser() user: JwtPayload, @Body() body: ApplyOTP_DTO) {
-    await this.auth.applyOTP(user, body.otp);
+    return await this.auth.applyOTP(user, body.otp);
   }
 }

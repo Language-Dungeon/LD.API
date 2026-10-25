@@ -29,6 +29,7 @@ import {
   JwtRefreshPayload,
   JwtRefreshRawPayload,
   OTP_KEY,
+  PASSWORD_OTP_KEY,
 } from "@types";
 import { Profile } from "passport-google-oauth20";
 import { EventEmitter2 } from "@nestjs/event-emitter";
@@ -273,10 +274,18 @@ export class AuthService {
     const user = await this.user.findOneByEmail(body.email);
     if (!user) return;
 
-    await this.emitter.emit(ForgotPasswordEvent.name, new ForgotPasswordEvent({ email: user.email }));
+    await this.emitter.emit(ForgotPasswordEvent.name, new ForgotPasswordEvent({ email: body.email }));
   }
 
   async applyForgotPasswordOTP(body: ApplyForgotPasswordOTP_DTO) {
+    const payload = await this.cache.get<IUserOTPCachePayload>(`${PASSWORD_OTP_KEY}:${body.email}`);
+    const user = await this.user.findOneByEmail(body.email);
+
+    if (!payload || !user || payload.otp != body.otp || user.password === null) throw new BadRequestException();
+
+    await this.cache.del(`${PASSWORD_OTP_KEY}:${body.email}`);
+    await this.user.update(user.id, { password: await this.crypto.hash(body.password) });
+
     return true;
   }
 
