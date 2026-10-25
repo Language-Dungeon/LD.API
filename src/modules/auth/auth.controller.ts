@@ -2,12 +2,10 @@ import { EXPIRES_IN_10MINS, EXPIRES_IN_7_DAYS, JwtPayload, JwtRefreshPayload, RO
 import { Body, Controller, Get, HttpCode, Post, Req, Res, UseGuards } from "@nestjs/common";
 import { CurrentSession, CurrentUser, GoogleGuard, SkipAccountActivated, SkipRefreshRoute } from "@common";
 import { CreateUserDto } from "@modules/users/dto";
-import { UserLoginDTO } from "./dto/login.dto";
 import type { Request, Response } from "express";
 import { AuthService } from "./auth.service";
 import { Public } from "@common";
-import { ApplyForgotPasswordOTP_DTO, ForgotPasswordDTO } from "./dto/forgot-password.dto";
-import { ApplyOTP_DTO } from "./dto/apply-otp.dto";
+import { UserLoginDTO, ForgotPasswordDTO, ApplyForgotPasswordOTP_DTO, ApplyOTP_DTO, ChangePasswordDTO } from "./dto";
 
 @Controller(ROUTES.AUTH.BASE)
 export class AuthController {
@@ -114,6 +112,20 @@ export class AuthController {
     return res.status(200).send();
   }
 
+  @Post(ROUTES.AUTH.GENERATE_OTP)
+  @HttpCode(200)
+  @SkipAccountActivated()
+  async generateOTP(@CurrentUser() user: JwtPayload) {
+    return await this.auth.generateOTP(user);
+  }
+
+  @Post(ROUTES.AUTH.APPLY_OTP)
+  @SkipAccountActivated()
+  @HttpCode(200)
+  async applyOTP(@CurrentUser() user: JwtPayload, @Body() body: ApplyOTP_DTO) {
+    return await this.auth.applyOTP(user, body.otp);
+  }
+
   @Public()
   @Post(ROUTES.AUTH.FORGOT_PASSWORD)
   @HttpCode(200)
@@ -128,17 +140,9 @@ export class AuthController {
     return await this.auth.applyForgotPasswordOTP(body);
   }
 
-  @Post(ROUTES.AUTH.GENERATE_OTP)
+  @Post(ROUTES.AUTH.CHANGE_PASSWORD)
   @HttpCode(200)
-  @SkipAccountActivated()
-  async generateOTP(@CurrentUser() user: JwtPayload) {
-    return await this.auth.generateOTP(user);
-  }
-
-  @Post(ROUTES.AUTH.APPLY_OTP)
-  @SkipAccountActivated()
-  @HttpCode(200)
-  async applyOTP(@CurrentUser() user: JwtPayload, @Body() body: ApplyOTP_DTO) {
-    return await this.auth.applyOTP(user, body.otp);
+  async changePassword(@CurrentUser() user: JwtPayload, @Body() body: ChangePasswordDTO) {
+    return await this.auth.changePassword(user, body);
   }
 }

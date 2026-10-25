@@ -1,22 +1,4 @@
 import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-  UnauthorizedException,
-} from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { JwtService } from "@nestjs/jwt";
-import { UserLoginDTO } from "./dto/login.dto";
-import { Cache } from "@nestjs/cache-manager";
-import { plainToInstance } from "class-transformer";
-import { UserDTO, CreateUserDto } from "@modules/users/dto";
-import { CryptoService } from "@modules/crypto";
-import { UsersService } from "@modules/users";
-import type { Request } from "express";
-
-import {
   type JwtRawPayload,
   BLACKLIST_KEY,
   Config,
@@ -31,10 +13,26 @@ import {
   OTP_KEY,
   PASSWORD_OTP_KEY,
 } from "@types";
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { JwtService } from "@nestjs/jwt";
+import { Cache } from "@nestjs/cache-manager";
+import { plainToInstance } from "class-transformer";
+import { UserDTO, CreateUserDto } from "@modules/users/dto";
+import { CryptoService } from "@modules/crypto";
+import { UsersService } from "@modules/users";
+import type { Request } from "express";
 import { Profile } from "passport-google-oauth20";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { ForgotPasswordEvent, SendOTPEmailEvent } from "@modules/users/events";
-import { ApplyForgotPasswordOTP_DTO, ForgotPasswordDTO } from "./dto/forgot-password.dto";
+import { ApplyForgotPasswordOTP_DTO, ChangePasswordDTO, ForgotPasswordDTO, UserLoginDTO } from "./dto";
 
 @Injectable()
 export class AuthService {
@@ -285,6 +283,17 @@ export class AuthService {
 
     await this.cache.del(`${PASSWORD_OTP_KEY}:${body.email}`);
     await this.user.update(user.id, { password: await this.crypto.hash(body.password) });
+
+    return true;
+  }
+
+  async changePassword(user: JwtPayload, body: ChangePasswordDTO): Promise<boolean> {
+    const dbUser = await this.user.findOne(user.sub);
+
+    if (!dbUser || !dbUser?.password) throw new BadRequestException();
+    if (!(await this.crypto.verifyHash(dbUser.password, body.oldPassword))) throw new UnauthorizedException();
+
+    await this.user.update(user.sub, { password: await this.crypto.hash(body.newPassword) });
 
     return true;
   }
