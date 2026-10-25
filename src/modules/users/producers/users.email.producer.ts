@@ -4,7 +4,15 @@ import { MailerService, OTPEmail } from "@modules/mailer";
 import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { Cache } from "@nestjs/cache-manager";
 import { Injectable } from "@nestjs/common";
-import { EXPIRES_IN_10MINS, IUserOTPCachePayload, OTP_KEY, QueueEventsType, QUEUES_EVENTS, QUEUES_NAMES } from "@types";
+import {
+  EXPIRES_IN_10MINS,
+  IUserOTPCachePayload,
+  OTP_KEY,
+  PASSWORD_OTP_KEY,
+  QueueEventsType,
+  QUEUES_EVENTS,
+  QUEUES_NAMES,
+} from "@types";
 import { Job } from "bullmq";
 import { jsx } from "react/jsx-runtime";
 
@@ -20,38 +28,63 @@ export class UsersEmailProcessor extends WorkerHost {
     super();
   }
 
+  /**
+   *
+   * @author przdev7
+   *
+   * @todo
+   * custom template for forgot password
+   * notifications
+   */
   async process(job: Job<QueueEventsType["payload"], QueueEventsType["name"]>): Promise<void> {
     const event = { name: job.name, payload: job.data } as QueueEventsType;
 
-    switch (event.name) {
-      case QUEUES_EVENTS.SEND_OTP: {
-        const otp = this.crypto.generate_otp();
+    try {
+      switch (event.name) {
+        case QUEUES_EVENTS.SEND_OTP: {
+          const otp = this.crypto.generate_otp();
 
-        await this.mailer.emails.send({
-          from: `Resend <onboarding@resend.dev>`,
-          to: event.payload.email,
-          subject: "Language Dangeon account activation code",
-          react: jsx(OTPEmail, { otp }),
-        });
-        await this.cache.set<IUserOTPCachePayload>(
-          `${OTP_KEY}:${event.payload.email}`,
-          { otp },
-          EXPIRES_IN_10MINS * 1000,
-        );
+          await this.mailer.emails.send({
+            from: `Resend <onboarding@resend.dev>`,
+            to: event.payload.email,
+            subject: "Language Dangeon account activation code",
+            react: jsx(OTPEmail, { otp }),
+          });
+          await this.cache.set<IUserOTPCachePayload>(
+            `${OTP_KEY}:${event.payload.email}`,
+            { otp },
+            EXPIRES_IN_10MINS * 1000,
+          );
 
-        break;
+          break;
+        }
+        case QUEUES_EVENTS.NOTIFCATION: {
+          this.logger.log("notification");
+          break;
+        }
+        case QUEUES_EVENTS.FORGOT_PASSWORD: {
+          const otp = this.crypto.generate_otp();
+
+          await this.mailer.emails.send({
+            from: `Resend <onboarding@resend.dev>`,
+            to: event.payload.email,
+            subject: "Language Dangeon forgot password code",
+            react: jsx(OTPEmail, { otp }),
+          });
+
+          await this.cache.set<IUserOTPCachePayload>(
+            `${PASSWORD_OTP_KEY}:${event.payload.email}`,
+            { otp },
+            EXPIRES_IN_10MINS * 1000,
+          );
+          break;
+        }
+        default: {
+          this.logger.error(`Unknown job: ${job.name}, ${JSON.stringify(job)}`);
+        }
       }
-      case QUEUES_EVENTS.NOTIFCATION: {
-        this.logger.log("notification");
-        break;
-      }
-      case QUEUES_EVENTS.FORGOT_PASSWORD: {
-        this.logger.log("forgot password");
-        break;
-      }
-      default: {
-        this.logger.error(`Unknown job: ${job.name}, ${JSON.stringify(job)}`);
-      }
+    } catch (e) {
+      this.logger.error(`Unknown error ${e}`);
     }
   }
 }
