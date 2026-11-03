@@ -1,5 +1,5 @@
-import { IsString, IsNotEmpty, IsEmail, MinLength, IsBoolean, IsDate, IsObject } from "class-validator";
-import { IUserAttributes } from "../../../schemas/user";
+import { IsString, IsNotEmpty, IsEmail, MinLength, IsBoolean, IsDate, IsObject, IsArray } from "class-validator";
+import { IUserAttributes, OnBoarding } from "../../../schemas/user";
 import { Exclude } from "class-transformer";
 import { PermissionValue, Roles } from "@types";
 
@@ -28,6 +28,9 @@ export class UserDTO implements IUserAttributes {
 
   @IsObject()
   permissions_overrides?: Record<PermissionValue, boolean> | undefined;
+
+  @IsArray()
+  onboarding?: OnBoarding[] | undefined;
 
   @IsDate()
   createdAt!: Date;
