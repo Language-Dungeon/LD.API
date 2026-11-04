@@ -17,6 +17,6 @@ export class OnboardingController {
   @Post(ROUTES.ONBOARDING.UPLOAD_RESULTS)
   @HttpCode(200)
   async uploadOnBooardingResults(@CurrentUser() user: JwtPayload, @Body() body: UploadResultsDto): Promise<void> {
-    return await this.uploadOnBooardingResults(user, body);
+    return await this.onboarding.uploadOnBoarding(user, body);
   }
 }

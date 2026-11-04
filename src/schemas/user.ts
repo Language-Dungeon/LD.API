@@ -46,7 +46,7 @@ export class User implements IUserAttributes {
   @Prop({ required: false, allowNull: true, type: mongoose.Schema.Types.String })
   password!: string | null;
 
-  @Prop({ required: true, type: mongoose.Schema.Types.Boolean })
+  @Prop({ required: true, type: mongoose.Schema.Types.Boolean, default: false })
   activated!: boolean;
 
   @Prop({ required: false, type: mongoose.Schema.Types.String, enum: ROLES, default: ROLES[0] }) // ROLES[0] == "user"
@@ -55,7 +55,7 @@ export class User implements IUserAttributes {
   @Prop({ required: false, type: Map, of: Boolean, default: {} })
   permissions_overrides?: Record<PermissionValue, boolean>;
 
-  @Prop({ required: false, schema: OnBoardingSchema, default: {} })
+  @Prop({ required: false, schema: OnBoardingSchema, default: [] })
   onboarding!: OnBoarding[];
 }
 

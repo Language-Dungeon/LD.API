@@ -26,7 +26,6 @@ export class UsersService {
         email_hmac: this.crypto.encrypt_hmac(email),
         email: await this.crypto.encrypt(email),
         password: password != null ? await this.crypto.hash(password) : null,
-        activated: false,
       });
       await this.authType.create({
         email_hmac: createdUser.email_hmac,
