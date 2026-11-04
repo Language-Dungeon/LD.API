@@ -57,13 +57,13 @@ export class UsersService {
     return await this.user.findOne({ email_hmac: hmacEmail });
   }
 
-  async findOneByEmailAndUpdate(email: string, updateUserDto: UpdateUserDto) {
+  async findOneByEmailAndUpdate(email: string, body: UpdateUserDto): Promise<UserDocument | null> {
     const hmacEmail = await this.crypto.encrypt_hmac(email);
-    return await this.user.findOneAndUpdate({ email_hmac: hmacEmail }, updateUserDto);
+    return await this.user.findOneAndUpdate({ email_hmac: hmacEmail }, body);
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserDocument | null> {
-    return await this.user.findByIdAndUpdate(id, updateUserDto);
+  async update(id: string, body: UpdateUserDto): Promise<UserDocument | null> {
+    return await this.user.findByIdAndUpdate(id, body);
   }
 
   async remove(id: string): Promise<UserDocument | null> {
