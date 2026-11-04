@@ -4,6 +4,7 @@ import mongoose, { HydratedDocument } from "mongoose";
 export interface ICharacterAttributes {
   user_id: string;
   name: string;
+  attributes: CharacterAbilities;
 }
 
 export interface IAttributes {
@@ -42,11 +43,8 @@ export class Character implements ICharacterAttributes {
   @Prop({ required: true, type: mongoose.Schema.Types.String })
   name!: string;
 
-  @Prop({ required: true, type: mongoose.Schema.Types.String })
-  language!: string;
-
   @Prop({ required: true, type: CharacterAbilitiesSchema })
-  abilities!: CharacterAbilities;
+  attributes!: CharacterAbilities;
 }
 
 export type CharacterDocument = HydratedDocument<Character>;

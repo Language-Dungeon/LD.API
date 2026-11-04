@@ -43,4 +43,8 @@ export const ROUTES = {
     GET_QUESTIONS_DATA: "questions-data",
     UPLOAD_RESULTS: "upload-results",
   },
+  CHARACTER: {
+    BASE: "character",
+    ALL: "all",
+  },
 } as const;
