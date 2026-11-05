@@ -4,3 +4,5 @@ export * from "./auth";
 export * from "./crypto";
 export * from "./users";
 export * from "./mailer";
+export * from "./characters";
+export * from "./onboarding";

@@ -38,4 +38,13 @@ export const ROUTES = {
     GOOGLE: "google",
     GOOGLE_CALLBACK: "google/callback",
   },
+  ONBOARDING: {
+    BASE: "onboarding",
+    GET_QUESTIONS_DATA: "questions-data",
+    UPLOAD_RESULTS: "upload-results",
+  },
+  CHARACTER: {
+    BASE: "characters",
+    ALL: "all",
+  },
 } as const;
