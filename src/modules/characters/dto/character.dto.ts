@@ -13,3 +13,9 @@ export class CharacterDTO implements ICharacterAttributes {
   @IsObject()
   attributes!: CharacterAbilities;
 }
+
+export class FetchCharacterDTO {
+  @IsString()
+  @IsNotEmpty()
+  characterId!: string;
+}

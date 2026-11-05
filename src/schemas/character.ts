@@ -37,13 +37,13 @@ const CharacterAbilitiesSchema = SchemaFactory.createForClass(CharacterAbilities
 
 @Schema({ timestamps: true })
 export class Character implements ICharacterAttributes {
-  @Prop({ required: true, unique: true, type: mongoose.Schema.Types.String })
+  @Prop({ required: true, unique: false, type: mongoose.Schema.Types.String })
   user_id!: string;
 
   @Prop({ required: true, type: mongoose.Schema.Types.String })
   name!: string;
 
-  @Prop({ required: true, type: CharacterAbilitiesSchema })
+  @Prop({ required: true, type: CharacterAbilitiesSchema, default: () => ({}) })
   attributes!: CharacterAbilities;
 }
 

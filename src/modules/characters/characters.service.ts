@@ -8,8 +8,8 @@ import { CreateCharacterDto, UpdateCharacterDTO } from "./dto";
 export class CharactersService {
   constructor(@InjectModel(Character.name) private readonly character: Model<Character>) {}
 
-  async create(userId: string, body: CreateCharacterDto) {
-    await this.character.create({ user_id: userId, name: body.name });
+  async create(userId: string, body: CreateCharacterDto): Promise<CharacterDocument> {
+    return await this.character.create({ user_id: userId, name: body.name });
   }
 
   async findOneByPk(characterId: string): Promise<CharacterDocument | null> {

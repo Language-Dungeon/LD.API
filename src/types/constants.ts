@@ -44,7 +44,7 @@ export const ROUTES = {
     UPLOAD_RESULTS: "upload-results",
   },
   CHARACTER: {
-    BASE: "character",
+    BASE: "characters",
     ALL: "all",
   },
 } as const;
