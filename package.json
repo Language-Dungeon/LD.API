@@ -11,6 +11,7 @@
     "format": "prettier --write .",
     "check": "npm run format && npm run typecheck",
     "build": "npm run check && nest build",
+    "build:full": "npm run check && nest build && node -r tsconfig-paths/register dist/main.js",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --watch --debug",
     "start:prod": "node -r tsconfig-paths/register dist/main.js",

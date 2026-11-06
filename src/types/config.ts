@@ -23,4 +23,6 @@ export interface Config {
   JWT_SECRET: string;
   JWT_REFRESH_SECRET: string;
   COOKIE_SECRET: string;
+
+  AUTH_BYPASS?: "true" | "false";
 }
