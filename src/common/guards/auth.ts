@@ -28,6 +28,32 @@ export class JwtAuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<Request>();
+
+    if (this.config.get("AUTH_BYPASS") === "true") {
+      req.user = {
+        sub: "dev",
+        jti: "dev",
+        iss: "LD.API",
+        aud: "LD.API",
+        iat: 0,
+        exp: Infinity,
+        username: "dev",
+        email: "dev@dev.local",
+        activated: true,
+        role: "admin",
+      };
+      req.session = {
+        sub: "dev",
+        jti: "dev",
+        iss: "LD.API",
+        aud: "LD.API",
+        iat: 0,
+        exp: Infinity,
+        familyId: "dev-family",
+      };
+      return true;
+    }
+
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_PROVIDER, [
       context.getHandler(),
       context.getClass(),
