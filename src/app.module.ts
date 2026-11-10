@@ -7,8 +7,7 @@ import {
   AuthModule,
   CryptoModule,
   UsersModule,
-  CharactersModule,
-  OnboardingModule,
+  AiModule,
 } from "@modules";
 import { MongooseModule } from "@nestjs/mongoose";
 import { ConfigModule, ConfigService } from "@nestjs/config";
@@ -60,6 +59,83 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
         JWT_SECRET: Joi.string().required(),
         JWT_REFRESH_SECRET: Joi.string().required(),
         COOKIE_SECRET: Joi.string().required(),
+
+        AUTH_BYPASS: Joi.boolean().default(false),
+
+        AI_LOCAL_ENABLED: Joi.boolean().default(true),
+        AI_CLOUD_ENABLED: Joi.boolean().default(true),
+        AI_FORCE_LOCAL: Joi.boolean().default(false),
+        AI_BYPASS: Joi.boolean().default(true),
+        AI_BYPASS_LOCAL_ONLY: Joi.boolean().default(true),
+        AI_DEFAULT_PROVIDER: Joi.string()
+          .valid(
+            "ollama",
+            "lmstudio",
+            "llamacpp",
+            "vllm",
+            "openai",
+            "anthropic",
+            "google",
+            "openrouter",
+            "groq",
+            "mistral",
+            "deepseek",
+          )
+          .default("ollama"),
+        AI_DEFAULT_MODEL: Joi.string().optional(),
+        AI_EMBED_MODEL: Joi.string().optional(),
+        AI_MAX_OUTPUT_TOKENS: Joi.number().integer().min(64).max(32768).default(1024),
+        AI_REQUEST_TIMEOUT_MS: Joi.number().integer().min(1000).max(600000).default(60000),
+        AI_CONTEXT_MAX_TURNS: Joi.number().integer().min(2).max(64).default(16),
+        AI_CONTEXT_SUMMARY_TURNS: Joi.number().integer().min(1).max(32).default(6),
+        AI_FAILOVER_CHAIN: Joi.string().allow("").default(""),
+
+        AI_OLLAMA_URL: Joi.string().uri().default("http://127.0.0.1:11434"),
+        AI_OLLAMA_MODEL: Joi.string().default("llama3.2"),
+        AI_OLLAMA_EMBED_MODEL: Joi.string().default("nomic-embed-text"),
+
+        AI_LMSTUDIO_URL: Joi.string().uri().default("http://127.0.0.1:1234/v1"),
+        AI_LMSTUDIO_MODEL: Joi.string().default("local-model"),
+        AI_LMSTUDIO_EMBED_MODEL: Joi.string().default("nomic-embed-text"),
+
+        AI_LLAMACPP_URL: Joi.string().uri().default("http://127.0.0.1:8080/v1"),
+        AI_LLAMACPP_MODEL: Joi.string().default("local-model"),
+        AI_LLAMACPP_EMBED_MODEL: Joi.string().allow("").default(""),
+
+        AI_VLLM_URL: Joi.string().uri().default("http://127.0.0.1:8000/v1"),
+        AI_VLLM_MODEL: Joi.string().default("local-model"),
+        AI_VLLM_EMBED_MODEL: Joi.string().allow("").default(""),
+
+        AI_OPENAI_API_KEY: Joi.string().allow("").default(""),
+        AI_OPENAI_URL: Joi.string().uri().default("https://api.openai.com/v1"),
+        AI_OPENAI_MODEL: Joi.string().default("gpt-4o-mini"),
+        AI_OPENAI_EMBED_MODEL: Joi.string().default("text-embedding-3-small"),
+
+        AI_ANTHROPIC_API_KEY: Joi.string().allow("").default(""),
+        AI_ANTHROPIC_URL: Joi.string().uri().default("https://api.anthropic.com/v1"),
+        AI_ANTHROPIC_MODEL: Joi.string().default("claude-3-5-sonnet-latest"),
+
+        AI_GOOGLE_API_KEY: Joi.string().allow("").default(""),
+        AI_GOOGLE_URL: Joi.string().uri().default("https://generativelanguage.googleapis.com/v1beta"),
+        AI_GOOGLE_MODEL: Joi.string().default("gemini-2.0-flash"),
+        AI_GOOGLE_EMBED_MODEL: Joi.string().default("text-embedding-004"),
+
+        AI_OPENROUTER_API_KEY: Joi.string().allow("").default(""),
+        AI_OPENROUTER_URL: Joi.string().uri().default("https://openrouter.ai/api/v1"),
+        AI_OPENROUTER_MODEL: Joi.string().default("meta-llama/llama-3.1-8b-instruct"),
+
+        AI_GROQ_API_KEY: Joi.string().allow("").default(""),
+        AI_GROQ_URL: Joi.string().uri().default("https://api.groq.com/openai/v1"),
+        AI_GROQ_MODEL: Joi.string().default("llama-3.1-8b-instant"),
+
+        AI_MISTRAL_API_KEY: Joi.string().allow("").default(""),
+        AI_MISTRAL_URL: Joi.string().uri().default("https://api.mistral.ai/v1"),
+        AI_MISTRAL_MODEL: Joi.string().default("mistral-small-latest"),
+        AI_MISTRAL_EMBED_MODEL: Joi.string().default("mistral-embed"),
+
+        AI_DEEPSEEK_API_KEY: Joi.string().allow("").default(""),
+        AI_DEEPSEEK_URL: Joi.string().uri().default("https://api.deepseek.com/v1"),
+        AI_DEEPSEEK_MODEL: Joi.string().default("deepseek-chat"),
       }).unknown(true),
     }),
 
@@ -149,8 +225,7 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
     CryptoModule,
     AuthModule,
     UsersModule,
-    CharactersModule,
-    OnboardingModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [

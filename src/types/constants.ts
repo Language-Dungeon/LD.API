@@ -13,6 +13,8 @@ export const USER_KEY = "user";
 export const BLACKLIST_KEY = "blacklist";
 export const OTP_KEY = "otp";
 export const PASSWORD_OTP_KEY = "password:otp";
+export const AI_EMBED_CACHE_KEY = "ai:embed";
+export const AI_HEALTH_CACHE_KEY = "ai:health";
 
 /* defined time in seconds */
 export const EXPIRES_IN_7_DAYS = 604800;
@@ -38,6 +40,20 @@ export const ROUTES = {
     GOOGLE: "google",
     GOOGLE_CALLBACK: "google/callback",
   },
+  AI: {
+    BASE: "ai",
+    PROVIDERS: "providers",
+    HEALTH: "health",
+    COMPLETE: "complete",
+    STREAM: "stream",
+    EMBED: "embed",
+    THREADS: "threads",
+    THREAD: ":threadId",
+    THREAD_MESSAGES: ":threadId/messages",
+    PROFILE: "profile",
+    EMBEDS: "embeds",
+    EMBED_DETAIL: ":embedId",
+    EMBED_EVENTS: ":embedId/events",
   ONBOARDING: {
     BASE: "onboarding",
     GET_QUESTIONS_DATA: "questions-data",
