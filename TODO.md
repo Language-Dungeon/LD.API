@@ -6,3 +6,5 @@
 - Caching
 - seprate modules in app.module
 - fix imports
+- after activation account refresh token
+- check if user have access to character

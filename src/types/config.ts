@@ -88,4 +88,5 @@ export interface Config {
   AI_DEEPSEEK_API_KEY: string;
   AI_DEEPSEEK_URL: string;
   AI_DEEPSEEK_MODEL: string;
+  AUTH_BYPASS?: "true" | "false";
 }
