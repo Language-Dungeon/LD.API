@@ -6,6 +6,7 @@ import type { Request, Response } from "express";
 import { AuthService } from "./auth.service";
 import { Public } from "@common";
 import { UserLoginDTO, ForgotPasswordDTO, ApplyForgotPasswordOTP_DTO, ApplyOTP_DTO, ChangePasswordDTO } from "./dto";
+import { User } from "@schemas/user";
 
 @Controller(ROUTES.AUTH.BASE)
 export class AuthController {
@@ -115,15 +116,15 @@ export class AuthController {
   @Post(ROUTES.AUTH.GENERATE_OTP)
   @HttpCode(200)
   @SkipAccountActivated()
-  async generateOTP(@CurrentUser() user: JwtPayload) {
+  async generateOTP(@CurrentUser() user: User) {
     return await this.auth.generateOTP(user);
   }
 
   @Post(ROUTES.AUTH.APPLY_OTP)
   @SkipAccountActivated()
   @HttpCode(200)
-  async applyOTP(@CurrentUser() user: JwtPayload, @Body() body: ApplyOTP_DTO) {
-    return await this.auth.applyOTP(user, body.otp);
+  async applyOTP(@CurrentUser() user: User, @CurrentSession() session: JwtRefreshPayload, @Body() body: ApplyOTP_DTO) {
+    return await this.auth.applyOTP(user, session, body.otp);
   }
 
   @Public()

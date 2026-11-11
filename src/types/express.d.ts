@@ -1,12 +1,14 @@
+import { User as UserClass } from "@schemas/user";
 import { JwtPayload, JwtRefreshPayload } from "./jwt";
 
 declare global {
   namespace Express {
     // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-    interface User extends JwtPayload {} // trzeba nadpisac typ z passport bo jest rozjebany
+    interface User extends UserClass {}
     interface Request {
       id: string;
-      user: User | undefined;
+      user: IUser | undefined;
+      jwt: JwtPayload | undefined;
       session: JwtRefreshPayload | undefined;
     }
   }

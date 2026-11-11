@@ -1,4 +1,5 @@
 import { getPermissionValue } from "@common/utils/permissions";
+import { UsersService } from "@modules/users";
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import {
@@ -14,7 +15,10 @@ import type { Request } from "express";
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly user: UsersService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<Request>();
@@ -28,8 +32,9 @@ export class PermissionsGuard implements CanActivate {
     ]);
 
     if (isPublic || skipRefreshRoute) return true;
+    if (!req.user || !req.jwt) throw new UnauthorizedException();
 
-    const user = req.user;
+    const user = await this.user.findOne(req.jwt.sub);
     if (!user) throw new UnauthorizedException();
 
     const requiredPermissions =
