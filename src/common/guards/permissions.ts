@@ -32,9 +32,9 @@ export class PermissionsGuard implements CanActivate {
     ]);
 
     if (isPublic || skipRefreshRoute) return true;
-    if (!req.user || !req.jwt) throw new UnauthorizedException();
+    if (!req.user) throw new UnauthorizedException();
 
-    const user = await this.user.findOne(req.jwt.sub);
+    const user = await this.user.findOne(req.user.id);
     if (!user) throw new UnauthorizedException();
 
     const requiredPermissions =

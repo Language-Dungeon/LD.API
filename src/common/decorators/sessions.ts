@@ -8,6 +8,13 @@ export const CurrentUser = createParamDecorator((data: unknown, ctx: ExecutionCo
   return req.user;
 });
 
+export const CurrentJwt = createParamDecorator((data: unknown, ctx: ExecutionContext) => {
+  const req: Request = ctx.switchToHttp().getRequest();
+  if (!req.jwt) throw new UnauthorizedException();
+
+  return req.jwt;
+});
+
 export const CurrentSession = createParamDecorator((data: unknown, ctx: ExecutionContext) => {
   const req: Request = ctx.switchToHttp().getRequest();
   if (!req.session) throw new UnauthorizedException();

@@ -1,23 +1,6 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import mongoose, { HydratedDocument } from "mongoose";
-import { PermissionValue, ROLES, type Roles } from "@types";
-
-export interface IUserAttributes {
-  // id: string;
-  username: string;
-  email: string;
-  email_hmac: string;
-  password: string | null;
-  activated: boolean;
-  role: Roles;
-  permissions_overrides?: Record<PermissionValue, boolean>;
-  onboarding?: OnBoarding[];
-}
-
-export interface IAnswer {
-  questionId: string;
-  answerId: string;
-}
+import { type IAnswer, IUserAttributes, type PermissionValue, ROLES, type Roles } from "@types";
 
 @Schema({ _id: false })
 export class OnBoarding implements IAnswer {
@@ -43,7 +26,7 @@ export class User implements IUserAttributes {
   email_hmac!: string;
 
   //TODO: rozwazyc dodanie select: false, dzieki temu nie pobiera hasla z bazy
-  @Prop({ required: false, allowNull: true, type: mongoose.Schema.Types.String })
+  @Prop({ required: false, allowNull: true, type: mongoose.Schema.Types.String, select: false })
   password!: string | null;
 
   @Prop({ required: true, type: mongoose.Schema.Types.Boolean, default: false })

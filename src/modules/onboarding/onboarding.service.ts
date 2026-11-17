@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { JwtPayload, onBoardingData } from "@types";
+import { IAuthUser, onBoardingData } from "@types";
 import { UploadResultsDto } from "./dto/results.dto";
 import { OnBoarding } from "@schemas/user";
 import { UsersService } from "@modules/users";
@@ -11,13 +11,13 @@ export class OnboardingService {
     return onBoardingData;
   }
 
-  async uploadOnBoarding(user: JwtPayload, body: UploadResultsDto): Promise<void> {
+  async uploadOnBoarding(user: IAuthUser, body: UploadResultsDto): Promise<void> {
     const onboarding: OnBoarding[] = [];
     for (const obj of body.results) {
       onboarding.push({ questionId: obj.questionId, answerId: obj.optionId });
     }
 
-    await this.users.update(user.sub, { onboarding: onboarding });
+    await this.users.update(user.id, { onboarding: onboarding });
 
     return;
   }

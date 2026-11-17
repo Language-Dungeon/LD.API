@@ -7,6 +7,7 @@ import { Model } from "mongoose";
 import { AuthType, User, UserDocument } from "@schemas";
 import { SendOTPEmailEvent } from "./events";
 import { UpdateUserDto } from "./dto";
+import { UserLean } from "@types";
 
 @Injectable()
 export class UsersService {
@@ -39,33 +40,41 @@ export class UsersService {
 
     await session.endSession();
 
-    this.emiiter.emit(SendOTPEmailEvent.name, new SendOTPEmailEvent({ email }));
+    this.emiiter.emit(SendOTPEmailEvent.name, new SendOTPEmailEvent({ email: user.email }));
     return user;
   }
 
-  async findAll(): Promise<UserDocument[]> {
-    return await this.user.find();
+  async findAll(): Promise<UserLean[]> {
+    return await this.user.find().lean();
   }
 
-  async findOne(id: string): Promise<UserDocument | null> {
-    return await this.user.findById(id);
+  async findOne(id: string): Promise<UserLean | null> {
+    return await this.user.findById(id).lean();
   }
 
-  async findOneByEmail(email: string): Promise<UserDocument | null> {
-    const hmacEmail = await this.crypto.encrypt_hmac(email);
-    return await this.user.findOne({ email_hmac: hmacEmail });
+  async findOneByEmail(email: string): Promise<UserLean | null> {
+    // const hmacEmail = this.crypto.encrypt_hmac(email);
+    return await this.user.findOne({ email_hmac: email }).lean();
   }
 
-  async findOneByEmailAndUpdate(email: string, body: UpdateUserDto): Promise<UserDocument | null> {
-    const hmacEmail = await this.crypto.encrypt_hmac(email);
-    return await this.user.findOneAndUpdate({ email_hmac: hmacEmail }, body);
+  async findOneByEmailWithPassword(email: string): Promise<UserDocument | null> {
+    //const hmacEmail = this.crypto.encrypt_hmac(email);
+    return await this.user.findOne({ email_hmac: email }).select("+password");
+  }
+  async findOneByIdWithPassword(id: string): Promise<UserDocument | null> {
+    return await this.user.findById(id).select("+password");
   }
 
-  async update(id: string, body: UpdateUserDto): Promise<UserDocument | null> {
-    return await this.user.findByIdAndUpdate(id, body);
+  async findOneByEmailAndUpdate(email: string, body: UpdateUserDto): Promise<UserLean | null> {
+    //   const hmacEmail = await this.crypto.encrypt_hmac(email);
+    return await this.user.findOneAndUpdate({ email_hmac: email }, body).lean();
   }
 
-  async remove(id: string): Promise<UserDocument | null> {
-    return await this.user.findOneAndDelete({ _id: id });
+  async update(id: string, body: UpdateUserDto): Promise<UserLean | null> {
+    return await this.user.findByIdAndUpdate(id, body).lean();
+  }
+
+  async remove(id: string): Promise<UserLean | null> {
+    return await this.user.findOneAndDelete({ _id: id }).lean();
   }
 }

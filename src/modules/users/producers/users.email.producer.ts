@@ -46,7 +46,7 @@ export class UsersEmailProcessor extends WorkerHost {
 
           await this.mailer.emails.send({
             from: `Resend <onboarding@resend.dev>`,
-            to: event.payload.email,
+            to: await this.crypto.decrypt(event.payload.email),
             subject: "Language Dangeon account activation code",
             react: jsx(OTPEmail, { otp }),
           });
@@ -67,7 +67,7 @@ export class UsersEmailProcessor extends WorkerHost {
 
           await this.mailer.emails.send({
             from: `Resend <onboarding@resend.dev>`,
-            to: event.payload.email,
+            to: await this.crypto.decrypt(event.payload.email),
             subject: "Language Dangeon forgot password code",
             react: jsx(OTPEmail, { otp }),
           });

@@ -22,6 +22,11 @@ export interface IOnBoardingQuestionnaire {
   options: IOnBoardingQuestionnaireOption[];
 }
 
+export interface IAnswer {
+  questionId: string;
+  answerId: string;
+}
+
 const questionsContent: Record<QuestionId, string> = {
   q1: "Wybierz język nauki",
   q2: "Gdy uczysz się czegoś nowego, co robisz najpierw?",

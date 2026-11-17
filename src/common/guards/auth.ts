@@ -63,8 +63,13 @@ export class JwtAuthGuard implements CanActivate {
     const user = await this.user.findOne(jwt.sub);
     if (!user) throw new UnauthorizedException();
 
-    req.user = user;
     req.jwt = jwt;
+    req.user = {
+      id: user._id.toString(),
+      username: user.username,
+      role: user.role,
+      permissions_overrides: user.permissions_overrides,
+    };
     return true;
   }
 

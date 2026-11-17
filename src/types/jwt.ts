@@ -1,5 +1,5 @@
 import { JwtPayload as BaseJwtPayload } from "jsonwebtoken";
-import { IUserAttributes } from "../schemas/user";
+import { IUserAttributes } from "./user";
 
 type StrictJwtPayload = Omit<BaseJwtPayload, string> & {
   iss?: string;

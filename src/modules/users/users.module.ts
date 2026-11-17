@@ -1,4 +1,4 @@
-import { User, UserSchema, AuthType, AuthTypeSchema } from "@schemas";
+import { UserSchema, AuthType, AuthTypeSchema, User } from "@schemas";
 import { UsersEmailProcessor } from "./producers/users.email.producer";
 import { UsersListener } from "./listeners/users.listeners";
 import { UsersController } from "./users.controller";
