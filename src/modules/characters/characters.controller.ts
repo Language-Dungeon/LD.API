@@ -1,10 +1,12 @@
-import { Body, Controller, Delete, Get, NotFoundException, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, NotFoundException, Patch, Post, UseGuards } from "@nestjs/common";
 import { IAuthUser, ROUTES } from "@types";
 import { CharactersService } from "./characters.service";
 import { CreateCharacterDto, FetchCharacterDTO, RemoveCharacterDTO, UpdateCharacterDTO } from "./dto";
 import { CurrentUser } from "@common/decorators";
 import { CharacterDocument } from "@schemas/character";
+import { CharacterGuard } from "@common";
 
+@UseGuards(CharacterGuard)
 @Controller(ROUTES.CHARACTER.BASE)
 export class CharactersController {
   constructor(private readonly character: CharactersService) {}
@@ -21,7 +23,7 @@ export class CharactersController {
 
   @Get()
   async findOne(@Body() body: FetchCharacterDTO): Promise<CharacterDocument> {
-    const character = await this.character.findOneByPk(body.characterId);
+    const character = await this.character.findOne(body.characterId);
     if (!character) throw new NotFoundException();
 
     return character;
