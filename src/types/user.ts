@@ -16,6 +16,7 @@ export interface IUserAttributes {
 
 export type UserLean = Omit<User, "password"> & {
   _id: mongoose.Types.ObjectId;
+  __v: number;
 };
 
 export interface IAuthUser {

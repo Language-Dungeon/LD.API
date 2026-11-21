@@ -25,7 +25,6 @@ export class User implements IUserAttributes {
   @Prop({ required: true, unique: true, type: mongoose.Schema.Types.String })
   email_hmac!: string;
 
-  //TODO: rozwazyc dodanie select: false, dzieki temu nie pobiera hasla z bazy
   @Prop({ required: false, allowNull: true, type: mongoose.Schema.Types.String, select: false })
   password!: string | null;
 

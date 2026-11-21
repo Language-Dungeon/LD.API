@@ -1,4 +1,3 @@
-import { LoggerService } from "@modules/logger";
 import { CryptoService } from "@modules/crypto";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { Injectable } from "@nestjs/common";
@@ -7,7 +6,8 @@ import { Model } from "mongoose";
 import { AuthType, User, UserDocument } from "@schemas";
 import { SendOTPEmailEvent } from "./events";
 import { UpdateUserDto } from "./dto";
-import { UserLean } from "@types";
+import { EXPIRES_IN_10MINS, USER_KEY, UserLean } from "@types";
+import { Cache } from "@nestjs/cache-manager";
 
 @Injectable()
 export class UsersService {
@@ -15,7 +15,7 @@ export class UsersService {
     @InjectModel(User.name) private readonly user: Model<User>,
     @InjectModel(AuthType.name) private readonly authType: Model<AuthType>,
     private readonly crypto: CryptoService,
-    private readonly _logger: LoggerService,
+    private readonly cache: Cache,
     private readonly emiiter: EventEmitter2,
   ) {}
 
@@ -49,7 +49,7 @@ export class UsersService {
   }
 
   async findOne(id: string): Promise<UserLean | null> {
-    return await this.user.findById(id).lean();
+    return await this.readThroughCache<UserLean | null>(`${USER_KEY}:${id}`, () => this.user.findById(id).lean());
   }
 
   async findOneByEmail(email: string): Promise<UserLean | null> {
@@ -66,7 +66,6 @@ export class UsersService {
   }
 
   async findOneByEmailAndUpdate(email: string, body: UpdateUserDto): Promise<UserLean | null> {
-    //   const hmacEmail = await this.crypto.encrypt_hmac(email);
     return await this.user.findOneAndUpdate({ email_hmac: email }, body).lean();
   }
 
@@ -76,5 +75,15 @@ export class UsersService {
 
   async remove(id: string): Promise<UserLean | null> {
     return await this.user.findOneAndDelete({ _id: id }).lean();
+  }
+
+  private async readThroughCache<T>(key: string, fetchDB: () => Promise<T>): Promise<T> {
+    const cacheValue = await this.cache.get<string>(key);
+    if (cacheValue) return JSON.parse(await this.crypto.decrypt(cacheValue)) as Promise<T>;
+
+    const dbValue = await fetchDB();
+    await this.cache.set(key, await this.crypto.encrypt(JSON.stringify(dbValue)), EXPIRES_IN_10MINS * 1000);
+
+    return dbValue;
   }
 }
