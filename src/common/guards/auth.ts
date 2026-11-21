@@ -16,6 +16,7 @@ import {
   BLACKLIST_KEY,
   SKIP_REFRESH_ROUTE,
 } from "@types";
+import { UsersService } from "@modules/users";
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -24,6 +25,7 @@ export class JwtAuthGuard implements CanActivate {
     private readonly jwt: JwtService,
     private readonly cache: Cache,
     private readonly config: ConfigService<Config>,
+    private readonly user: UsersService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -75,16 +77,25 @@ export class JwtAuthGuard implements CanActivate {
   }
 
   private async verifyAccess(token: string, req: Request): Promise<boolean> {
-    const user = await this.jwt.verifyAsync<JwtPayload>(token, {
+    const jwt = await this.jwt.verifyAsync<JwtPayload>(token, {
       secret: this.config.getOrThrow("JWT_SECRET"),
       issuer: "LD.API",
       audience: "LD.API",
     });
 
-    const payload = await this.cache.get<ITokenRotationCachePayload>(`${BLACKLIST_KEY}:${user.sub}`);
-    if (payload != undefined && payload.jti === user.jti) throw new UnauthorizedException();
+    const payload = await this.cache.get<ITokenRotationCachePayload>(`${BLACKLIST_KEY}:${jwt.sub}`);
+    if (payload != undefined && payload.jti === jwt.jti) throw new UnauthorizedException();
 
-    req.user = user;
+    const user = await this.user.findOne(jwt.sub);
+    if (!user) throw new UnauthorizedException();
+
+    req.jwt = jwt;
+    req.user = {
+      id: user._id.toString(),
+      username: user.username,
+      role: user.role,
+      permissions_overrides: user.permissions_overrides,
+    };
     return true;
   }
 

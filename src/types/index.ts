@@ -6,3 +6,4 @@ export * from "./permissions";
 export * from "./bullmq";
 export * from "./cache";
 export * from "./onboarding";
+export * from "./user";

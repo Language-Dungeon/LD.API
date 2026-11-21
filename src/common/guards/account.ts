@@ -1,3 +1,4 @@
+import { UsersService } from "@modules/users";
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { IS_PUBLIC_PROVIDER, SKIP_ACCOUNT_ACTIVATED } from "@types";
@@ -5,7 +6,10 @@ import type { Request } from "express";
 
 @Injectable()
 export class AccountGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly user: UsersService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<Request>();
@@ -19,9 +23,12 @@ export class AccountGuard implements CanActivate {
     ]);
 
     if (isPublic || skipAccountActivated) return true;
-
     if (!req.user) throw new UnauthorizedException();
-    if (req.user.activated === false) throw new ForbiddenException("ACCOUNT_NOT_ACTIVATED");
+
+    const dbUser = await this.user.findOne(req.user.id);
+    if (!dbUser) throw new UnauthorizedException();
+
+    if (dbUser.activated === false) throw new ForbiddenException("ACCOUNT_NOT_ACTIVATED");
 
     return true;
   }
