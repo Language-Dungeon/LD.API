@@ -1,8 +1,10 @@
-import type { AiHttpClient } from "../transport/ai-http.client";
+import { AiHttpClient } from "../transport/ai-http.client";
 import type { AiConfig } from "../config/ai-config.types";
 import { isLocalProvider, runtimeOf, type AiProvider } from "../config/provider";
 import { AiEnv } from "../config/ai-env";
-import type { ConfigService } from "@nestjs/config";
+import { AI_MODULE_CONFIG } from "../config/ai-config.tokens";
+import { Inject } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import type { Config } from "@types";
 import { AiException } from "../errors/ai-exception";
 import { AiBaseGateway, type AiGatewayDependencies } from "./ai-base.gateway";
@@ -26,7 +28,7 @@ export class AiGatewayRegistry {
   private readonly cache = new Map<AiProvider, AiBaseGateway>();
 
   constructor(
-    private readonly config: AiConfig,
+    @Inject(AI_MODULE_CONFIG) private readonly config: AiConfig,
     private readonly source: ConfigService<Config>,
     private readonly http: AiHttpClient,
   ) {}
@@ -36,7 +38,6 @@ export class AiGatewayRegistry {
     if (cached) return cached;
 
     const credentials = AiEnv.credentials(this.source, provider);
-    const runtime = runtimeOf(provider);
     const bypass = isLocalProvider(provider) ? true : this.config.bypass;
 
     const deps = {

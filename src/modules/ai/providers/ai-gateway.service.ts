@@ -8,7 +8,7 @@ import { AI_MODULE_CONFIG } from "../config/ai-config.tokens";
 import type { AiConfig } from "../config/ai-config.types";
 import { AI_PROVIDERS, isAiProvider, isLocalProvider, runtimeOf, type AiProvider } from "../config/provider";
 import { AiEnv } from "../config/ai-env";
-import type { ConfigService } from "@nestjs/config";
+import { ConfigService } from "@nestjs/config";
 import type { Config } from "@types";
 import { AiGatewayRegistry } from "./ai-gateway.registry";
 import type { AiBaseGateway } from "./ai-base.gateway";
