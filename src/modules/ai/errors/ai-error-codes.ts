@@ -36,9 +36,7 @@ export type AiErrorDomain = "input" | "provider" | "stream" | "embedding" | "sto
 
 export type AiDiagnosticSeverity = "error" | "warning" | "info";
 
-export interface AiErrorContext {
-  readonly [key: string]: unknown;
-}
+export type AiErrorContext = Readonly<Record<string, unknown>>;
 
 export interface AiErrorDescriptor {
   readonly code: AiErrorCode;

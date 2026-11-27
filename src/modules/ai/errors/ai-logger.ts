@@ -7,6 +7,16 @@ import type { AiErrorCode } from "./ai-error-codes";
 type Level = "debug" | "info" | "warn" | "error";
 
 export class AiLogger implements NestLoggerService {
+  static console(context = "AI"): AiLogger {
+    const target: NestLoggerService = {
+      log: (message: unknown) => console.log(message),
+      error: (message: unknown) => console.error(message),
+      warn: (message: unknown) => console.warn(message),
+    };
+
+    return new AiLogger(target, context);
+  }
+
   constructor(
     private readonly target: NestLoggerService,
     private readonly context = "AI",

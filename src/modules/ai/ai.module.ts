@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, type FactoryProvider } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 import { LoggerModule, LoggerService } from "@modules/logger";
 import { AiConfigModule } from "./config/ai-config.module";
@@ -22,15 +22,17 @@ import { AiExceptionFilter } from "./errors/ai-exception.filter";
 import { AiLogger } from "./errors/ai-logger";
 import { AI_SCHEMAS } from "./schemas/ai.schemas";
 
+const AI_LOGGER_PROVIDER: FactoryProvider = {
+  provide: AI_LOGGER,
+  inject: [{ token: LoggerService, optional: true }],
+  useFactory: (logger?: LoggerService) => (logger ? new AiLogger(logger, "AI") : AiLogger.console()),
+};
+
 @Module({
   imports: [LoggerModule.register("AI"), AiConfigModule, MongooseModule.forFeature([...AI_SCHEMAS])],
   controllers: [AiController],
   providers: [
-    {
-      provide: AI_LOGGER,
-      inject: [LoggerService],
-      useFactory: (logger: LoggerService) => new AiLogger(logger, "AI"),
-    },
+    AI_LOGGER_PROVIDER,
     AiExceptionFilter,
     AiHttpClient,
     AiGatewayRegistry,
