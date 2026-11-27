@@ -38,7 +38,7 @@ const ARCHIVED = "archived";
 export class AiThreadRepository {
   constructor(
     @InjectModel(AiThread.name) private readonly threads: Model<AiThread>,
-    @InjectModel(AiMessage.name) private readonly messages: Model<AiMessage>,
+    @InjectModel(AiMessage.name) private readonly messageModel: Model<AiMessage>,
     @Inject(AI_MODULE_CONFIG) private readonly config: AiConfig,
   ) {}
 
@@ -109,7 +109,7 @@ export class AiThreadRepository {
     }
 
     try {
-      const message = await this.messages.create({
+      const message = await this.messageModel.create({
         user_id: input.userId,
         thread_id: input.threadId,
         role: input.role,
@@ -151,7 +151,7 @@ export class AiThreadRepository {
     if (!isObjectId(threadId)) return [];
 
     try {
-      const documents = await this.messages
+      const documents = await this.messageModel
         .find({ thread_id: threadId, user_id: userId, status: { $ne: "error" } })
         .sort({ created_at: -1, createdAt: -1 })
         .limit(this.bound(limit, this.config.limits.maxHistoryMessages))
@@ -168,7 +168,7 @@ export class AiThreadRepository {
     if (!isObjectId(threadId)) return [];
 
     try {
-      const documents = await this.messages
+      const documents = await this.messageModel
         .find({ thread_id: threadId, user_id: userId })
         .sort({ created_at: -1, createdAt: -1 })
         .limit(this.bound(limit, this.config.limits.maxHistoryMessages))
@@ -182,7 +182,7 @@ export class AiThreadRepository {
 
   async userTurns(userId: string, limit: number): Promise<{ role: string; content: string }[]> {
     try {
-      const documents = await this.messages
+      const documents = await this.messageModel
         .find({ user_id: userId, role: "user", status: { $ne: "error" } })
         .sort({ created_at: -1, createdAt: -1 })
         .limit(this.bound(limit, this.config.limits.maxHistoryMessages))
@@ -217,7 +217,7 @@ export class AiThreadRepository {
     if (embedIds.length === 0 || !isObjectId(messageId)) return;
 
     try {
-      await this.messages.updateOne({ _id: messageId }, { $addToSet: { embed_ids: { $each: [...embedIds] } } });
+      await this.messageModel.updateOne({ _id: messageId }, { $addToSet: { embed_ids: { $each: [...embedIds] } } });
     } catch (error) {
       throw this.storageFailure("attach-embeds", error);
     }
@@ -226,10 +226,7 @@ export class AiThreadRepository {
   private async titleIfEmpty(threadId: string, userId: string, content: string): Promise<void> {
     const title = this.deriveTitle(content);
 
-    await this.threads.updateOne(
-      { _id: threadId, user_id: userId, message_count: 0 },
-      { $set: { title } },
-    );
+    await this.threads.updateOne({ _id: threadId, user_id: userId, message_count: 0 }, { $set: { title } });
   }
 
   private deriveTitle(content: string): string {

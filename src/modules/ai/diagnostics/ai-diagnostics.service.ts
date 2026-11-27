@@ -95,7 +95,10 @@ export class AiDiagnosticsService {
 
   configuration(): AiConfigurationReport {
     const issues = new AiIssueCollector();
-    const envFile = AiEnvFileReader.read(process.cwd(), process.env.NODE_ENV === "production" ? ".env.production" : ".env");
+    const envFile = AiEnvFileReader.read(
+      process.cwd(),
+      process.env.NODE_ENV === "production" ? ".env.production" : ".env",
+    );
     const knownKeys = new Set(AiEnv.validKeys());
     const envKeys = new Set(envFile.entries.map((entry) => entry.key));
     const isProduction = this.source.get<string>("NODE_ENV") === "production";
@@ -213,14 +216,23 @@ export class AiDiagnosticsService {
       });
     }
 
-    if (this.config.embeddings.enabled && !providers.some((provider) => provider.supportsEmbeddings && provider.enabled)) {
+    if (
+      this.config.embeddings.enabled &&
+      !providers.some((provider) => provider.supportsEmbeddings && provider.enabled)
+    ) {
       issues.warning("AI_EMBEDDINGS_UNAVAILABLE", {
         message: "Embeddings are enabled but no enabled provider declares an embedding model.",
       });
     }
 
-    if (this.config.forceLocal && !isLocalProvider(preferred) && !providers.some((provider) => provider.runtime === "local" && provider.baseUrl)) {
-      issues.warning("AI_PROVIDER_UNAVAILABLE", { message: "AI_FORCE_LOCAL is on but no local runtime is reachable by configuration." });
+    if (
+      this.config.forceLocal &&
+      !isLocalProvider(preferred) &&
+      !providers.some((provider) => provider.runtime === "local" && provider.baseUrl)
+    ) {
+      issues.warning("AI_PROVIDER_UNAVAILABLE", {
+        message: "AI_FORCE_LOCAL is on but no local runtime is reachable by configuration.",
+      });
     }
 
     if (isProduction && this.config.bypass) {
@@ -258,7 +270,12 @@ export class AiDiagnosticsService {
 
   database(): AiDatabaseReport {
     if (!this.connection) {
-      return { connected: false, readyState: 99, state: READY_STATES[99] ?? "unknown", error: "connection not provided" };
+      return {
+        connected: false,
+        readyState: 99,
+        state: READY_STATES[99] ?? "unknown",
+        error: "connection not provided",
+      };
     }
 
     const readyState = this.connection.readyState;

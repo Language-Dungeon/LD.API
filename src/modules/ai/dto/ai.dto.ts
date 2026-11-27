@@ -1,7 +1,7 @@
 import { IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength } from "class-validator";
 import { Type } from "class-transformer";
-import { AI_CEFR_LEVELS, type AiCefrLevel } from "../../profile/ai-level.types";
-import { AI_EMBED_KINDS, type AiEmbedKind } from "../../embeds/ai-embed.repository";
+import { AI_CEFR_LEVELS, type AiCefrLevel } from "../profile/ai-level.types";
+import { AI_EMBED_KINDS, type AiEmbedKind } from "../embeds/ai-embed.repository";
 
 const ID_MAX_LENGTH = 64;
 const QUESTION_MAX_LENGTH = 8000;

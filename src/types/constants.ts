@@ -54,6 +54,7 @@ export const ROUTES = {
     EMBEDS: "embeds",
     EMBED_DETAIL: ":embedId",
     EMBED_EVENTS: ":embedId/events",
+  },
   ONBOARDING: {
     BASE: "onboarding",
     GET_QUESTIONS_DATA: "questions-data",

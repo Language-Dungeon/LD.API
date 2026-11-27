@@ -1,5 +1,3 @@
-import type { AiProvider } from "./ai";
-
 export interface Config {
   NODE_ENV: "production" | "dev";
   PORT_MAIN: number;
@@ -31,7 +29,7 @@ export interface Config {
   AI_LOCAL_ENABLED: boolean;
   AI_CLOUD_ENABLED: boolean;
   AI_FORCE_LOCAL: boolean;
-  AI_DEFAULT_PROVIDER: AiProvider;
+  AI_DEFAULT_PROVIDER: string;
   AI_DEFAULT_MODEL: string;
   AI_EMBED_MODEL: string;
   AI_MAX_OUTPUT_TOKENS: number;
@@ -88,5 +86,4 @@ export interface Config {
   AI_DEEPSEEK_API_KEY: string;
   AI_DEEPSEEK_URL: string;
   AI_DEEPSEEK_MODEL: string;
-  AUTH_BYPASS?: "true" | "false";
 }

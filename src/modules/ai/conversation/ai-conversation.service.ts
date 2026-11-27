@@ -113,7 +113,10 @@ export class AiConversationService {
   }
 
   summarize(
-    histories: { thread: { title: string; message_count: number; last_message_at: Date }; messages: { role: string; content: string }[] }[],
+    histories: {
+      thread: { title: string; message_count: number; last_message_at: Date };
+      messages: { role: string; content: string }[];
+    }[],
   ): { role: string; content: string }[] {
     const lines: string[] = [];
 

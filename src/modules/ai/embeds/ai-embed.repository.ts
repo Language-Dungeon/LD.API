@@ -42,7 +42,7 @@ const TITLE_LIMIT = 120;
 export class AiEmbedRepository {
   constructor(
     @InjectModel(AiEmbed.name) private readonly embeds: Model<AiEmbed>,
-    @InjectModel(AiEmbedEvent.name) private readonly events: Model<AiEmbedEvent>,
+    @InjectModel(AiEmbedEvent.name) private readonly eventModel: Model<AiEmbedEvent>,
     @Inject(AI_MODULE_CONFIG) private readonly config: AiConfig,
   ) {}
 
@@ -148,7 +148,7 @@ export class AiEmbedRepository {
 
       if (!updated) throw new AiException("AI_EMBED_NOT_FOUND", { details: { embedId } });
 
-      await this.events.create({ user_id: userId, embed_id: embedId, type, payload });
+      await this.eventModel.create({ user_id: userId, embed_id: embedId, type, payload });
       await this.trimEvents(embedId);
 
       return { revision: updated.revision };
@@ -166,7 +166,7 @@ export class AiEmbedRepository {
     const exists = await this.embeds.exists({ _id: embedId, user_id: userId });
     if (!exists) throw new AiException("AI_EMBED_NOT_FOUND", { details: { embedId } });
 
-    return this.events
+    return this.eventModel
       .find({ embed_id: embedId })
       .sort({ createdAt: -1 })
       .limit(MAX_EVENTS_PER_EMBED)
@@ -174,17 +174,17 @@ export class AiEmbedRepository {
   }
 
   private async trimEvents(embedId: string): Promise<void> {
-    const overflow = await this.events.countDocuments({ embed_id: embedId });
+    const overflow = await this.eventModel.countDocuments({ embed_id: embedId });
     if (overflow <= MAX_EVENTS_PER_EMBED) return;
 
-    const stale = await this.events
+    const stale = await this.eventModel
       .find({ embed_id: embedId })
       .sort({ createdAt: 1 })
       .limit(overflow - MAX_EVENTS_PER_EMBED)
       .select({ _id: 1 })
       .lean<{ _id: unknown }[]>();
 
-    await this.events.deleteMany({ _id: { $in: stale.map((document) => document._id) } });
+    await this.eventModel.deleteMany({ _id: { $in: stale.map((document) => document._id) } });
   }
 
   private toView(document: AiEmbedDocument): AiEmbedView {

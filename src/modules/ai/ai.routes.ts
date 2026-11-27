@@ -18,7 +18,7 @@ export const AI_ROUTES = {
   PROFILE_LEVEL: "profile/level",
   PROFILE_GOALS: "profile/goals",
   EMBEDS: "embeds",
-  EMBED: ":embedId",
+  EMBED_DETAIL: ":embedId",
   EMBED_EVENTS: ":embedId/events",
 } as const;
 
@@ -69,7 +69,13 @@ const AI_ENV_VALIDATION = Joi.object({
   ...providerSchema("VLLM", "http://127.0.0.1:8000/v1", "local-model", "", false),
   ...providerSchema("OPENAI", "https://api.openai.com/v1", "gpt-4o-mini", "text-embedding-3-small", true),
   ...providerSchema("ANTHROPIC", "https://api.anthropic.com/v1", "claude-3-5-sonnet-latest", "", true),
-  ...providerSchema("GOOGLE", "https://generativelanguage.googleapis.com/v1beta", "gemini-2.0-flash", "text-embedding-004", true),
+  ...providerSchema(
+    "GOOGLE",
+    "https://generativelanguage.googleapis.com/v1beta",
+    "gemini-2.0-flash",
+    "text-embedding-004",
+    true,
+  ),
   ...providerSchema("OPENROUTER", "https://openrouter.ai/api/v1", "meta-llama/llama-3.1-8b-instruct", "", true),
   ...providerSchema("GROQ", "https://api.groq.com/openai/v1", "llama-3.1-8b-instant", "", true),
   ...providerSchema("MISTRAL", "https://api.mistral.ai/v1", "mistral-small-latest", "mistral-embed", true),

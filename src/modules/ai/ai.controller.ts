@@ -231,7 +231,7 @@ export class AiController {
     });
   }
 
-  @Get(ROUTES.EMBED)
+  @Get(ROUTES.EMBED_DETAIL)
   @HttpCode(200)
   async embedById(@CurrentUser() user: JwtPayload, @Param("embedId") embedId: string) {
     return this.embeds.require(user.sub, embedId);
