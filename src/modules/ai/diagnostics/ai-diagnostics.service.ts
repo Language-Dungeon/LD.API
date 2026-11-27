@@ -11,6 +11,7 @@ import { AI_PROVIDERS, isLocalProvider, runtimeOf } from "../config/provider";
 import { AiGatewayService } from "../providers/ai-gateway.service";
 import type { AiProviderProbe } from "../providers/ai-provider-status";
 import { AiIssueCollector, type AiDiagnosticIssue } from "../errors/ai-diagnostics";
+import { AiException } from "../errors/ai-exception";
 import { AI_ERROR_CATALOG } from "../errors/ai-error-catalog";
 import type { AiErrorCode } from "../errors/ai-error-codes";
 import { maskSecret } from "../errors/ai-redaction";
@@ -79,13 +80,16 @@ export class AiDiagnosticsService {
     const configuration = this.configuration();
     const database = this.database();
     const providers = options.probe ? await this.gateways.probeAll() : [];
+    const reachable = providers.some((probe) => probe.ok);
+    const issues = this.withProbeIssues(configuration.issues, providers);
 
-    const ready = !configuration.issues.some((issue) => issue.severity === "error") && database.connected;
+    const ready =
+      !issues.some((issue) => issue.severity === "error") && database.connected && (!options.probe || reachable);
 
     return {
       ready,
       checkedAt: new Date().toISOString(),
-      configuration,
+      configuration: { ...configuration, issues },
       route: this.gateways.route(),
       providers,
       database,
@@ -93,7 +97,56 @@ export class AiDiagnosticsService {
     };
   }
 
+  private withProbeIssues(
+    issues: readonly AiDiagnosticIssue[],
+    probes: readonly AiProviderProbe[],
+  ): AiDiagnosticIssue[] {
+    if (probes.length === 0) return [...issues];
+
+    const collector = new AiIssueCollector();
+    for (const issue of issues) {
+      collector[issue.severity](issue.code, {
+        message: issue.message,
+        hint: issue.hint,
+        variable: issue.variable,
+        provider: issue.provider,
+      });
+    }
+
+    for (const probe of probes) {
+      if (probe.ok) continue;
+
+      const code: AiErrorCode = probe.available ? "AI_UPSTREAM_UNREACHABLE" : "AI_AUTH_MISSING";
+      collector.warning(code, {
+        provider: probe.provider,
+        message: `${probe.provider} did not answer: ${probe.error ?? probe.issues.join("; ")}`,
+        variable: probe.available ? undefined : `AI_${probe.provider.toUpperCase()}_API_KEY`,
+      });
+    }
+
+    if (probes.length > 0 && !probes.some((probe) => probe.ok)) {
+      collector.error("AI_PROVIDER_UNAVAILABLE", {
+        message: "No AI provider answered the probe; chat and embeddings will fail until one does.",
+      });
+    }
+
+    return collector.all();
+  }
+
   configuration(): AiConfigurationReport {
+    const stage = { step: "start" };
+
+    try {
+      return this.buildConfiguration(stage);
+    } catch (error) {
+      throw new AiException("AI_CONFIG_INVALID", {
+        cause: error,
+        details: { stage: stage.step, reason: error instanceof Error ? error.message : String(error) },
+      });
+    }
+  }
+
+  private buildConfiguration(stage: { step: string }): AiConfigurationReport {
     const issues = new AiIssueCollector();
     const envFile = AiEnvFileReader.read(
       process.cwd(),
@@ -101,7 +154,8 @@ export class AiDiagnosticsService {
     );
     const knownKeys = new Set(AiEnv.validKeys());
     const envKeys = new Set(envFile.entries.map((entry) => entry.key));
-    const isProduction = this.source.get<string>("NODE_ENV") === "production";
+    stage.step = "source";
+    const isProduction = this.source?.get<string>("NODE_ENV") === "production";
 
     if (!envFile.exists) {
       issues.warning("AI_CONFIG_INVALID", {
@@ -110,12 +164,18 @@ export class AiDiagnosticsService {
       });
     }
 
+    const missing: string[] = [];
+
     for (const key of knownKeys) {
       if (envKeys.has(key) || process.env[key] !== undefined) continue;
 
+      missing.push(key);
+    }
+
+    if (missing.length > 0) {
       issues.info("AI_CONFIG_INVALID", {
-        message: `${key} is not set; the module default applies.`,
-        variable: key,
+        message: `${missing.length} AI variable(s) are not set; module defaults apply.`,
+        variable: missing.join(", "),
       });
     }
 
@@ -163,6 +223,7 @@ export class AiDiagnosticsService {
     }
 
     const providers = AI_PROVIDERS.map((provider) => {
+      stage.step = "credentials:" + provider;
       const credentials = AiEnv.credentials(this.source, provider);
       const local = isLocalProvider(provider);
       const enabled = local ? this.config.localEnabled : this.config.cloudEnabled;
@@ -249,6 +310,8 @@ export class AiDiagnosticsService {
         variable: ".env.production",
       });
     }
+
+    stage.step = "result";
 
     return {
       envFile,
