@@ -1,10 +1,6 @@
 - Unit tests
 - add metadata for swagger
 - request tracking
-- update on login google
 - better permissions
-- Caching
 - seprate modules in app.module
-- fix imports
-- after activation account refresh token
-- check if user have access to character
+- pipe for normalizing body email

@@ -1,6 +1,6 @@
-import { EXPIRES_IN_10MINS, EXPIRES_IN_7_DAYS, JwtPayload, JwtRefreshPayload, ROUTES } from "@types";
+import { EXPIRES_IN_10MINS, EXPIRES_IN_7_DAYS, IAuthUser, JwtPayload, JwtRefreshPayload, ROUTES } from "@types";
 import { Body, Controller, Get, HttpCode, Post, Req, Res, UseGuards } from "@nestjs/common";
-import { CurrentSession, CurrentUser, GoogleGuard, SkipAccountActivated, SkipRefreshRoute } from "@common";
+import { CurrentJwt, CurrentSession, CurrentUser, GoogleGuard, SkipAccountActivated, SkipRefreshRoute } from "@common";
 import { CreateUserDto } from "@modules/users/dto";
 import type { Request, Response } from "express";
 import { AuthService } from "./auth.service";
@@ -101,29 +101,33 @@ export class AuthController {
 
   @Get(ROUTES.AUTH.ME)
   @HttpCode(200)
-  async me(@CurrentUser() user: JwtPayload) {
+  async me(@CurrentUser() user: IAuthUser) {
     return user;
   }
 
   @Post(ROUTES.AUTH.LOGOUT)
   @HttpCode(200)
-  async logout(@CurrentUser() user: JwtPayload, @CurrentSession() session: JwtRefreshPayload, @Res() res: Response) {
-    await this.auth.logout(user, session);
+  async logout(@CurrentJwt() jwt: JwtPayload, @CurrentSession() session: JwtRefreshPayload, @Res() res: Response) {
+    await this.auth.logout(jwt, session);
     return res.status(200).send();
   }
 
   @Post(ROUTES.AUTH.GENERATE_OTP)
   @HttpCode(200)
   @SkipAccountActivated()
-  async generateOTP(@CurrentUser() user: JwtPayload) {
+  async generateOTP(@CurrentUser() user: IAuthUser) {
     return await this.auth.generateOTP(user);
   }
 
   @Post(ROUTES.AUTH.APPLY_OTP)
   @SkipAccountActivated()
   @HttpCode(200)
-  async applyOTP(@CurrentUser() user: JwtPayload, @Body() body: ApplyOTP_DTO) {
-    return await this.auth.applyOTP(user, body.otp);
+  async applyOTP(
+    @CurrentUser() user: IAuthUser,
+    @CurrentSession() session: JwtRefreshPayload,
+    @Body() body: ApplyOTP_DTO,
+  ) {
+    return await this.auth.applyOTP(user, session, body.otp);
   }
 
   @Public()
@@ -142,7 +146,7 @@ export class AuthController {
 
   @Post(ROUTES.AUTH.CHANGE_PASSWORD)
   @HttpCode(200)
-  async changePassword(@CurrentUser() user: JwtPayload, @Body() body: ChangePasswordDTO) {
+  async changePassword(@CurrentUser() user: IAuthUser, @Body() body: ChangePasswordDTO) {
     return await this.auth.changePassword(user, body);
   }
 }

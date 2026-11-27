@@ -5,6 +5,7 @@ import {
   EXPIRES_IN_10MINS,
   EXPIRES_IN_7_DAYS,
   FAMILY_KEY,
+  IAuthUser,
   ITokenRotationCachePayload,
   IUserOTPCachePayload,
   JwtPayload,
@@ -47,20 +48,15 @@ export class AuthService {
 
   //TODO: Add finding by username
   async login(body: UserLoginDTO) {
-    const user = await this.user.findOneByEmail(body.email);
+    const user = await this.user.findOneByEmailWithPassword(await this.crypto.encrypt_hmac(body.email));
     if (!user) throw new NotFoundException();
 
     if (!user.password) throw new UnauthorizedException("please use google login");
     if (!(await this.crypto.verifyHash(user.password, body.password))) throw new UnauthorizedException();
-    const decryptedEmail = await this.crypto.decrypt(user.email);
 
     const access = await this.generateAuthJwt({
       sub: user.id,
-      email: decryptedEmail,
-      username: user.username,
-      activated: user.activated,
       role: user.role,
-      permissions_overrides: user.permissions_overrides ?? undefined,
     });
 
     const refresh = await this.generateRefreshJwt({
@@ -91,21 +87,17 @@ export class AuthService {
     if (emails === undefined || emails[0] === undefined)
       throw new InternalServerErrorException("Not found email for this account, please contact support");
 
-    const mainEmail = emails[0].value;
+    const mainEmail = this.crypto.encrypt_hmac(emails[0].value);
     const user = await this.user.findOneByEmailAndUpdate(mainEmail, { username: profile.displayName });
 
     if (user) {
       const access = await this.generateAuthJwt({
-        sub: user.id,
-        email: mainEmail,
-        username: user.username,
-        activated: user.activated,
+        sub: user._id.toString(),
         role: user.role,
-        permissions_overrides: user.permissions_overrides ?? undefined,
       });
 
       const refresh = await this.generateRefreshJwt({
-        sub: user.id,
+        sub: user._id.toString(),
         familyId: crypto.randomUUID(),
       });
 
@@ -115,11 +107,7 @@ export class AuthService {
     const createdUser = await this.user.create(mainEmail, profile.displayName, null);
     const access = await this.generateAuthJwt({
       sub: createdUser.id,
-      email: mainEmail,
-      username: createdUser.username,
-      activated: createdUser.activated,
       role: createdUser.role,
-      permissions_overrides: createdUser.permissions_overrides ?? undefined,
     });
 
     const refresh = await this.generateRefreshJwt({
@@ -143,18 +131,13 @@ export class AuthService {
     const user = await this.user.findOne(session.sub);
     if (!user) throw new UnauthorizedException();
 
-    const { id, username, email, activated, role, permissions_overrides } = user;
+    const { _id, role } = user;
     const { sub, familyId } = session;
-    const decryptedEmail = await this.crypto.decrypt(email);
 
     return {
       access: await this.generateAuthJwt({
-        sub: id,
-        email: decryptedEmail,
-        username,
-        activated,
+        sub: _id.toString(),
         role,
-        permissions_overrides,
       }),
       refresh: await this.generateRefreshJwt({ sub, familyId }),
     };
@@ -169,8 +152,8 @@ export class AuthService {
    * JWTID trafia do cache'u w ktorym jest do wygasniecia jego waznosci
    * Auth Guard sprawdza blacklist przy kazdym zapytaniu do zabezpieczonego endpointu
    */
-  async logout(user: JwtPayload, session: JwtRefreshPayload) {
-    await this.cache.set(`${BLACKLIST_KEY}:${user.sub}`, user.jti, user.exp * 1000 - Date.now());
+  async logout(jwt: JwtPayload, session: JwtRefreshPayload) {
+    await this.cache.set(`${BLACKLIST_KEY}:${jwt.sub}`, jwt.jti, jwt.exp * 1000 - Date.now());
     await this.cache.set<ITokenRotationCachePayload>(
       `${FAMILY_KEY}:${session.familyId}`,
       {
@@ -243,14 +226,18 @@ export class AuthService {
    * @todo
    * add ratelimiting
    */
-  async generateOTP(user: JwtPayload): Promise<void> {
-    if (user.activated) throw new BadRequestException();
-    await this.emitter.emit(SendOTPEmailEvent.name, new SendOTPEmailEvent({ email: user.email }));
+  async generateOTP(user: IAuthUser): Promise<void> {
+    const dbUser = await this.user.findOne(user.id);
+
+    if (!dbUser) throw new UnauthorizedException();
+    if (dbUser.activated) throw new BadRequestException();
+    await this.emitter.emit(SendOTPEmailEvent.name, new SendOTPEmailEvent({ email: dbUser.email }));
   }
 
   /**
    * @author przdev7
    *
+   * @todo do poprawy
    *
    * @description
    * Metoda służy do weryfikowania emailu użytkownika,
@@ -258,26 +245,30 @@ export class AuthService {
    * na podany email jest wysyłany kod, który jest weryfikowany w tej funkcji.
    * Kod OTP jest ważny 10min od wygenerowania.
    */
-  async applyOTP(user: JwtPayload, otp: string): Promise<boolean> {
-    const payload = await this.cache.get<IUserOTPCachePayload>(`${OTP_KEY}:${user.email}`);
-    if (!payload || payload.otp != otp || user.activated) throw new BadRequestException();
+  async applyOTP(user: IAuthUser, session: JwtRefreshPayload, otp: string): Promise<boolean> {
+    const dbUser = await this.user.findOne(user.id);
+    if (!dbUser) throw new UnauthorizedException();
 
-    await this.cache.del(`${OTP_KEY}:${user.email}`);
-    await this.user.update(user.sub, { activated: true });
+    const payload = await this.cache.get<IUserOTPCachePayload>(`${OTP_KEY}:${dbUser.email}`);
+    if (!payload || payload.otp != otp || dbUser.activated) throw new BadRequestException();
+
+    await this.cache.del(`${OTP_KEY}:${dbUser.email}`);
+    await this.user.update(session.sub, { activated: true });
 
     return true;
   }
 
+  //TODO: do przemyslenia encryptowanie w DTO
   async forgotPassword(body: ForgotPasswordDTO) {
-    const user = await this.user.findOneByEmail(body.email);
-    if (!user) return;
+    const dbUser = await this.user.findOneByEmail(await this.crypto.encrypt_hmac(body.email));
+    if (!dbUser) throw new UnauthorizedException();
 
-    await this.emitter.emit(ForgotPasswordEvent.name, new ForgotPasswordEvent({ email: body.email }));
+    await this.emitter.emit(ForgotPasswordEvent.name, new ForgotPasswordEvent({ email: dbUser.email }));
   }
 
   async applyForgotPasswordOTP(body: ApplyForgotPasswordOTP_DTO) {
     const payload = await this.cache.get<IUserOTPCachePayload>(`${PASSWORD_OTP_KEY}:${body.email}`);
-    const user = await this.user.findOneByEmail(body.email);
+    const user = await this.user.findOneByEmailWithPassword(this.crypto.encrypt_hmac(body.email));
 
     if (!payload || !user || payload.otp != body.otp || user.password === null) throw new BadRequestException();
 
@@ -287,13 +278,12 @@ export class AuthService {
     return true;
   }
 
-  async changePassword(user: JwtPayload, body: ChangePasswordDTO): Promise<boolean> {
-    const dbUser = await this.user.findOne(user.sub);
+  async changePassword(user: IAuthUser, body: ChangePasswordDTO): Promise<boolean> {
+    const dbUser = await this.user.findOneByIdWithPassword(user.id);
 
     if (!dbUser || !dbUser?.password) throw new BadRequestException();
     if (!(await this.crypto.verifyHash(dbUser.password, body.oldPassword))) throw new UnauthorizedException();
-
-    await this.user.update(user.sub, { password: await this.crypto.hash(body.newPassword) });
+    await this.user.update(user.id, { password: await this.crypto.hash(body.newPassword) });
 
     return true;
   }

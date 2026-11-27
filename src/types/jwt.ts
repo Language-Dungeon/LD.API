@@ -1,5 +1,5 @@
 import { JwtPayload as BaseJwtPayload } from "jsonwebtoken";
-import { IUserAttributes } from "../schemas/user";
+import { IUserAttributes } from "./user";
 
 type StrictJwtPayload = Omit<BaseJwtPayload, string> & {
   iss?: string;
@@ -10,7 +10,9 @@ type StrictJwtPayload = Omit<BaseJwtPayload, string> & {
   jti?: string;
 };
 
-export type JwtPayload = Required<StrictJwtPayload> & Omit<IUserAttributes, "password" | "email_hmac">;
+export type JwtPayload = Required<StrictJwtPayload> & {
+  role: IUserAttributes["role"];
+};
 export type JwtRawPayload = Omit<JwtPayload, "exp" | "iat" | "iss" | "aud" | "jti" | number>;
 
 export type JwtRefreshPayload = Required<StrictJwtPayload> & {

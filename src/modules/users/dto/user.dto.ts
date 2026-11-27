@@ -1,7 +1,7 @@
 import { IsString, IsNotEmpty, IsEmail, MinLength, IsBoolean, IsDate, IsObject, IsArray } from "class-validator";
-import { IUserAttributes, OnBoarding } from "../../../schemas/user";
 import { Exclude } from "class-transformer";
-import { PermissionValue, Roles } from "@types";
+import { IUserAttributes, PermissionValue, Roles } from "@types";
+import { OnBoarding } from "@schemas/user";
 
 export class UserDTO implements IUserAttributes {
   @IsBoolean()

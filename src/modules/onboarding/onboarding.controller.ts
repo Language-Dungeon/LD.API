@@ -1,8 +1,8 @@
 import { Body, Controller, Get, HttpCode, Post } from "@nestjs/common";
 import { OnboardingService } from "./onboarding.service";
-import { CurrentUser, Public } from "@common/decorators";
-import { JwtPayload, ROUTES } from "@types";
 import { UploadResultsDto } from "./dto/results.dto";
+import { CurrentUser, Public } from "@common";
+import { IAuthUser, ROUTES } from "@types";
 
 @Controller(ROUTES.ONBOARDING.BASE)
 export class OnboardingController {
@@ -16,7 +16,7 @@ export class OnboardingController {
 
   @Post(ROUTES.ONBOARDING.UPLOAD_RESULTS)
   @HttpCode(200)
-  async uploadOnBooardingResults(@CurrentUser() user: JwtPayload, @Body() body: UploadResultsDto): Promise<void> {
+  async uploadOnBooardingResults(@CurrentUser() user: IAuthUser, @Body() body: UploadResultsDto): Promise<void> {
     return await this.onboarding.uploadOnBoarding(user, body);
   }
 }

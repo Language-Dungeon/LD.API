@@ -1,4 +1,5 @@
-import { JwtPayload, JwtRefreshPayload } from "./jwt";
+import { JwtRefreshPayload, JwtPayload } from "./jwt";
+import { IAuthUser as UserType } from "./user";
 
 declare global {
   namespace Express {

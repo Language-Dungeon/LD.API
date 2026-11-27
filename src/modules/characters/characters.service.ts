@@ -12,7 +12,7 @@ export class CharactersService {
     return await this.character.create({ user_id: userId, name: body.name });
   }
 
-  async findOneByPk(characterId: string): Promise<CharacterDocument | null> {
+  async findOne(characterId: string): Promise<CharacterDocument | null> {
     return await this.character.findById(characterId);
   }
 

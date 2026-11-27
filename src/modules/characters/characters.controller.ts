@@ -1,27 +1,29 @@
-import { Body, Controller, Delete, Get, NotFoundException, Patch, Post } from "@nestjs/common";
-import { JwtPayload, ROUTES } from "@types";
+import { Body, Controller, Delete, Get, NotFoundException, Patch, Post, UseGuards } from "@nestjs/common";
+import { IAuthUser, ROUTES } from "@types";
 import { CharactersService } from "./characters.service";
 import { CreateCharacterDto, FetchCharacterDTO, RemoveCharacterDTO, UpdateCharacterDTO } from "./dto";
 import { CurrentUser } from "@common/decorators";
 import { CharacterDocument } from "@schemas/character";
+import { CharacterGuard } from "@common";
 
+@UseGuards(CharacterGuard)
 @Controller(ROUTES.CHARACTER.BASE)
 export class CharactersController {
   constructor(private readonly character: CharactersService) {}
 
   @Post()
-  async create(@CurrentUser() user: JwtPayload, @Body() body: CreateCharacterDto): Promise<CharacterDocument> {
-    return await this.character.create(user.sub, body);
+  async create(@CurrentUser() user: IAuthUser, @Body() body: CreateCharacterDto): Promise<CharacterDocument> {
+    return await this.character.create(user.id, body);
   }
 
   @Get(ROUTES.CHARACTER.ALL)
-  async findAll(@CurrentUser() user: JwtPayload): Promise<CharacterDocument[]> {
-    return await this.character.findAllByUserId(user.sub);
+  async findAll(@CurrentUser() user: IAuthUser): Promise<CharacterDocument[]> {
+    return await this.character.findAllByUserId(user.id);
   }
 
   @Get()
   async findOne(@Body() body: FetchCharacterDTO): Promise<CharacterDocument> {
-    const character = await this.character.findOneByPk(body.characterId);
+    const character = await this.character.findOne(body.characterId);
     if (!character) throw new NotFoundException();
 
     return character;
@@ -42,7 +44,7 @@ export class CharactersController {
   }
 
   @Delete()
-  async remove(@CurrentUser() body: RemoveCharacterDTO): Promise<CharacterDocument> {
+  async remove(@Body() body: RemoveCharacterDTO): Promise<CharacterDocument> {
     const character = await this.character.remove(body.characterId);
     if (!character) throw new NotFoundException();
 
