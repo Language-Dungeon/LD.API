@@ -7,8 +7,8 @@ import {
   AuthModule,
   CryptoModule,
   UsersModule,
-  CharactersModule,
-  OnboardingModule,
+  AiModule,
+  AiEnvironmentSchema,
 } from "@modules";
 import { MongooseModule } from "@nestjs/mongoose";
 import { ConfigModule, ConfigService } from "@nestjs/config";
@@ -60,6 +60,10 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
         JWT_SECRET: Joi.string().required(),
         JWT_REFRESH_SECRET: Joi.string().required(),
         COOKIE_SECRET: Joi.string().required(),
+
+        AUTH_BYPASS: Joi.boolean().default(false),
+
+        ...AiEnvironmentSchema,
       }).unknown(true),
     }),
 
@@ -149,8 +153,7 @@ const envFileName = process.env.NODE_ENV === "production" ? ".env.production" : 
     CryptoModule,
     AuthModule,
     UsersModule,
-    CharactersModule,
-    OnboardingModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [
